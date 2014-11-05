@@ -364,7 +364,7 @@ begin
      // check for opened main application
      WinHwnd := FindWindow(nil, PWideChar(FMainAppCaption));
      if not (IsWindow(WinHwnd)) then
-        Exit;
+        Exit(False);
 
      // show dialog
      case MessageDlg('Main application is already running!' + #13#10#13#10 +

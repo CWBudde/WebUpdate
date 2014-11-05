@@ -242,11 +242,11 @@ begin
     FProject.ChannelsFilename := 'WebUpdate\Channels.json';
   end;
 
-  // create channels
+  // create & setup channels
   FChannels := TWebUpdateChannels.Create;
-
   SetupDefaultChannels;
 
+  // create & setup self update
   FWebUpdate := TWebUpdate.Create;
   FWebUpdate.GetCurrentChannelInformation;
 end;
@@ -326,7 +326,7 @@ end;
 
 procedure TFormWebUpdateTool.ActionCheckUpdateExecute(Sender: TObject);
 begin
-  FWebUpdate.GetCurrentChannelInformation;
+  FWebUpdate.GetChannelsInformation;
   if FWebUpdate.CheckForUpdate then
     if MessageDlg('A new update is available!' + #13#10#13#10 +
       'Update now?', mtInformation, [mbYes, mbNo], 0) = mrYes then
@@ -647,6 +647,7 @@ begin
     Node := TreeChannels.AddChild(TreeChannels.RootNode);
     Node.CheckType := ctRadioButton;
     NodeData := TreeChannels.GetNodeData(Node);
+
     NodeData^.Name := CChannelNames[Index];
     NodeData^.FileName := NodeData^.Name + '.json';
     NodeData^.Modified := 0;
