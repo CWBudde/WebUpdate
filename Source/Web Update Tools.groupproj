@@ -1,0 +1,48 @@
+﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+		<PropertyGroup>
+			<ProjectGuid>{0F76F6EF-5669-4EF1-AB45-2FC4E56B085A}</ProjectGuid>
+		</PropertyGroup>
+		<ItemGroup>
+			<Projects Include="WebUpdateTool.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="Updater.dproj">
+				<Dependencies/>
+			</Projects>
+		</ItemGroup>
+		<ProjectExtensions>
+			<Borland.Personality>Default.Personality.12</Borland.Personality>
+			<Borland.ProjectType/>
+			<BorlandProject>
+				<Default.Personality/>
+			</BorlandProject>
+		</ProjectExtensions>
+		<Target Name="WebUpdateTool">
+			<MSBuild Projects="WebUpdateTool.dproj"/>
+		</Target>
+		<Target Name="WebUpdateTool:Clean">
+			<MSBuild Targets="Clean" Projects="WebUpdateTool.dproj"/>
+		</Target>
+		<Target Name="WebUpdateTool:Make">
+			<MSBuild Targets="Make" Projects="WebUpdateTool.dproj"/>
+		</Target>
+		<Target Name="Updater">
+			<MSBuild Projects="Updater.dproj"/>
+		</Target>
+		<Target Name="Updater:Clean">
+			<MSBuild Targets="Clean" Projects="Updater.dproj"/>
+		</Target>
+		<Target Name="Updater:Make">
+			<MSBuild Targets="Make" Projects="Updater.dproj"/>
+		</Target>
+		<Target Name="Build">
+			<CallTarget Targets="WebUpdateTool;Updater"/>
+		</Target>
+		<Target Name="Clean">
+			<CallTarget Targets="WebUpdateTool:Clean;Updater:Clean"/>
+		</Target>
+		<Target Name="Make">
+			<CallTarget Targets="WebUpdateTool:Make;Updater:Make"/>
+		</Target>
+		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" Project="$(BDS)\Bin\CodeGear.Group.Targets"/>
+	</Project>

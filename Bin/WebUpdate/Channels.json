@@ -1,0 +1,22 @@
+{
+	"ID" : "Channels",
+	"Modified" : "2014-11-05T14:59:27.551",
+	"Files" : [
+		{
+			"Name" : "Stable",
+			"Modified" : "2014-10-29T23:28:33.782"
+		},
+		{
+			"Name" : "Beta",
+			"Modified" : "2014-10-29T23:28:33.782"
+		},
+		{
+			"Name" : "Alpha",
+			"Modified" : "2014-11-05T14:59:17.511"
+		},
+		{
+			"Name" : "Nightly",
+			"Modified" : "2014-11-05T14:59:17.511"
+		}
+	]
+}

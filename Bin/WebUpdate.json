@@ -1,0 +1,13 @@
+{
+	"ID" : "Channel",
+	"Modified" : "2014-10-29T23:28:33.782",
+	"Files" : [
+		{
+			"FileName" : "WebUpdateTool.exe",
+			"Size" : 2782208,
+			"Modified" : "2014-10-29T23:27:49.555",
+			"MD5" : 0
+		}
+	],
+	"AppName" : "WebUpdateTool.exe"
+}
