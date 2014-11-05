@@ -109,12 +109,12 @@ object FormWebUpdateTool: TFormWebUpdateTool
       object ToolButtonChannelsAdd: TToolButton
         Left = 0
         Top = 0
-        Action = ActionChannelsAdd
+        Action = ActionAddChannel
       end
       object ToolButtonChannelsDelete: TToolButton
         Left = 100
         Top = 0
-        Action = ActionChannelsDelete
+        Action = ActionDeleteChannel
       end
       object ToolButton2: TToolButton
         Left = 200
@@ -127,7 +127,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
       object ToolButton1: TToolButton
         Left = 208
         Top = 0
-        Action = ActionChannelScan
+        Action = ActionScanFiles
       end
       object Separator1: TToolButton
         Left = 308
@@ -140,12 +140,12 @@ object FormWebUpdateTool: TFormWebUpdateTool
       object ToolButtonChannelsStore: TToolButton
         Left = 316
         Top = 0
-        Action = ActionSnapshot
+        Action = ActionTakeSnapshot
       end
       object ToolButton4: TToolButton
         Left = 416
         Top = 0
-        Action = ActionChannelsCopyUpload
+        Action = ActionCopyUpload
       end
     end
     object TreeChannels: TVirtualStringTree
@@ -189,33 +189,43 @@ object FormWebUpdateTool: TFormWebUpdateTool
         end>
     end
   end
+  object UpDown1: TUpDown
+    Left = 264
+    Top = 240
+    Width = 16
+    Height = 24
+    TabOrder = 3
+  end
   object MainMenu: TMainMenu
     Images = Images
     Left = 40
     Top = 104
     object MenuItemFile: TMenuItem
-      Caption = '&Project'
+      Caption = '&File'
       object MenuItemFileOpen: TMenuItem
-        Action = ActionProjectOpen
+        Action = ActionFileOpen
       end
       object MenuItemFileSave: TMenuItem
-        Action = ActionProjectSave
+        Action = ActionFileSave
       end
       object MenuItemSaveAs: TMenuItem
-        Action = ActionProjectSaveAs
+        Action = ActionFileSaveAs
       end
       object N3: TMenuItem
         Caption = '-'
       end
       object MenuItemProjectOptions: TMenuItem
-        Action = ActionProjectOptions
+        Action = ActionFileOptions
       end
       object N1: TMenuItem
         Caption = '-'
       end
       object MenuItemExit: TMenuItem
-        Action = ActionProjectExit
+        Action = ActionFileExit
       end
+    end
+    object MenuItemView: TMenuItem
+      Caption = '&View'
     end
     object MenuItemTools: TMenuItem
       Caption = '&Update'
@@ -254,47 +264,47 @@ object FormWebUpdateTool: TFormWebUpdateTool
     Images = Images
     Left = 168
     Top = 104
-    object ActionChannelScan: TAction
-      Category = 'Channel'
+    object ActionScanFiles: TAction
+      Category = 'Project'
       Caption = '&Scan Files'
       ImageIndex = 4
-      OnExecute = ActionChannelScanExecute
+      OnExecute = ActionScanFilesExecute
     end
-    object ActionProjectExit: TFileExit
-      Category = 'Project'
+    object ActionFileExit: TFileExit
+      Category = 'File'
       Caption = 'E&xit'
       ImageIndex = 2
     end
-    object ActionProjectSave: TAction
-      Category = 'Project'
+    object ActionFileSave: TAction
+      Category = 'File'
       Caption = 'Save'
       ImageIndex = 1
-      OnExecute = ActionProjectSaveExecute
+      OnExecute = ActionFileSaveExecute
     end
-    object ActionProjectSaveAs: TFileSaveAs
-      Category = 'Project'
+    object ActionFileSaveAs: TFileSaveAs
+      Category = 'File'
       Caption = 'Save &as...'
       Dialog.DefaultExt = '.wup'
       Dialog.Filter = 'WebUpdate Project (*.wup)|*.wup'
       Hint = 'Save as|Saves file'
       ImageIndex = 1
-      OnAccept = ActionProjectSaveAsAccept
+      OnAccept = ActionFileSaveAsAccept
     end
-    object ActionProjectOpen: TFileOpen
-      Category = 'Project'
+    object ActionFileOpen: TFileOpen
+      Category = 'File'
       Caption = '&Open...'
       Dialog.DefaultExt = '.wup'
       Dialog.Filter = 'WebUpdate Project (*.wup)|*.wup'
       Hint = 'Open|Opens existing file'
       ImageIndex = 0
       ShortCut = 16463
-      OnAccept = ActionProjectOpenAccept
+      OnAccept = ActionFileOpenAccept
     end
-    object ActionProjectOptions: TAction
-      Category = 'Project'
+    object ActionFileOptions: TAction
+      Category = 'File'
       Caption = '&Options...'
       ImageIndex = 3
-      OnExecute = ActionProjectOptionsExecute
+      OnExecute = ActionFileOptionsExecute
     end
     object ActionUpdate: TAction
       Category = 'Update'
@@ -307,35 +317,29 @@ object FormWebUpdateTool: TFormWebUpdateTool
       Caption = 'Check for &Updates'
       OnExecute = ActionCheckUpdateExecute
     end
-    object ActionChannelsAdd: TAction
-      Category = 'Channels'
+    object ActionAddChannel: TAction
+      Category = 'Project'
       Caption = '&Add Channel'
       ImageIndex = 5
-      OnExecute = ActionChannelsAddExecute
+      OnExecute = ActionAddChannelExecute
     end
-    object ActionChannelsDelete: TAction
-      Category = 'Channels'
+    object ActionDeleteChannel: TAction
+      Category = 'Project'
       Caption = '&Delete Channel'
       ImageIndex = 6
-      OnExecute = ActionChannelsDeleteExecute
+      OnExecute = ActionDeleteChannelExecute
     end
-    object ActionChannelsCopyUpload: TAction
-      Category = 'Channels'
+    object ActionCopyUpload: TAction
+      Category = 'Project'
       Caption = 'Copy / &Upload'
       ImageIndex = 9
-      OnExecute = ActionChannelsCopyUploadExecute
+      OnExecute = ActionCopyUploadExecute
     end
-    object ActionRevert: TAction
-      Category = 'Channels'
-      Caption = 'Revert'
-      ImageIndex = 10
-      OnExecute = ActionRevertExecute
-    end
-    object ActionSnapshot: TAction
-      Category = 'Channels'
+    object ActionTakeSnapshot: TAction
+      Category = 'Project'
       Caption = 'Snapshot'
       ImageIndex = 11
-      OnExecute = ActionSnapshotExecute
+      OnExecute = ActionTakeSnapshotExecute
     end
   end
   object Images: TImageList
@@ -888,7 +892,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
     Left = 168
     Top = 264
     object ScanDirectoriesandFiles1: TMenuItem
-      Action = ActionChannelScan
+      Action = ActionScanFiles
     end
     object N2: TMenuItem
       Caption = '-'

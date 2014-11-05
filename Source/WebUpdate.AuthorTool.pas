@@ -1,4 +1,4 @@
-unit WebUpdate.Main;
+unit WebUpdate.AuthorTool;
 
 interface
 
@@ -7,7 +7,7 @@ uses
   Winapi.Windows, Winapi.Messages, Vcl.Graphics, Vcl.Controls, Vcl.Forms,
   Vcl.Dialogs, Vcl.ComCtrls, Vcl.ToolWin, Vcl.Menus, Vcl.ActnList,
   Vcl.StdActns, Vcl.ImgList, Vcl.StdCtrls, Vcl.ExtCtrls,
-  IdComponent, VirtualTrees, WebUpdate.Preferences.JSON,
+  IdComponent, VirtualTrees, WebUpdate.Preferences.JSON, WebUpdate.WebUpdate,
   WebUpdate.Project.JSON, WebUpdate.Channels.JSON, WebUpdate.Channel.JSON;
 
 type
@@ -28,51 +28,19 @@ type
   end;
   PFileItem = ^TFileItem;
 
-  TWebUpdate = class
-  private
-    FAutoGet: Boolean;
-    FBaseURL: string;
-    FChannelName: string;
-    FChannels: TWebUpdateChannels;
-    FChannelsFile: TFileName;
-    FDownloadUpdater: Boolean;
-    FLastModified: TDateTime;
-    FUpdaterFileName: TFileName;
-    procedure SetChannelName(const Value: string);
-  public
-    constructor Create; overload;
-    constructor Create(BaseURL: string; ChannelsFileName: TFileName); overload;
-    destructor Destroy; override;
-
-    function CheckForUpdate: Boolean;
-    procedure GetCurrentChannelInformation;
-    procedure GetChannelsInformation;
-    procedure PerformUpdate;
-    procedure PerformDownloadUpdater;
-
-    property AutoGetCurrentChannelInformation: Boolean read FAutoGet write FAutoGet;
-    property BaseURL: string read FBaseURL write FBaseURL;
-    property ChannelName: string read FChannelName write SetChannelName;
-    property ChannelsFileName: TFileName read FChannelsFile write FChannelsFile;
-    property LastModified: TDateTime read FLastModified;
-    property DownloadUpdater: Boolean read FDownloadUpdater write FDownloadUpdater;
-    property UpdaterFileName: TFileName read FUpdaterFileName write FUpdaterFileName;
-  end;
-
   TFormWebUpdateTool = class(TForm)
-    ActionChannelsAdd: TAction;
-    ActionChannelScan: TAction;
-    ActionChannelsDelete: TAction;
-    ActionChannelsCopyUpload: TAction;
+    ActionAddChannel: TAction;
+    ActionScanFiles: TAction;
+    ActionDeleteChannel: TAction;
+    ActionCopyUpload: TAction;
     ActionCheckUpdate: TAction;
     ActionList: TActionList;
-    ActionProjectExit: TFileExit;
-    ActionProjectOpen: TFileOpen;
-    ActionProjectOptions: TAction;
-    ActionProjectSave: TAction;
-    ActionProjectSaveAs: TFileSaveAs;
-    ActionRevert: TAction;
-    ActionSnapshot: TAction;
+    ActionFileExit: TFileExit;
+    ActionFileOpen: TFileOpen;
+    ActionFileOptions: TAction;
+    ActionFileSave: TAction;
+    ActionFileSaveAs: TFileSaveAs;
+    ActionTakeSnapshot: TAction;
     ActionUpdate: TAction;
     CheckForUpdateTimer: TTimer;
     Images: TImageList;
@@ -112,22 +80,22 @@ type
     TreeFileList: TVirtualStringTree;
     ToolButton1: TToolButton;
     ToolButton2: TToolButton;
+    MenuItemView: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure ActionChannelsAddExecute(Sender: TObject);
-    procedure ActionChannelScanExecute(Sender: TObject);
-    procedure ActionChannelsDeleteExecute(Sender: TObject);
+    procedure ActionAddChannelExecute(Sender: TObject);
+    procedure ActionScanFilesExecute(Sender: TObject);
+    procedure ActionDeleteChannelExecute(Sender: TObject);
     procedure ActionChannelsRecallExecute(Sender: TObject);
     procedure ActionChannelsStoreExecute(Sender: TObject);
-    procedure ActionChannelsCopyUploadExecute(Sender: TObject);
+    procedure ActionCopyUploadExecute(Sender: TObject);
     procedure ActionCheckUpdateExecute(Sender: TObject);
-    procedure ActionProjectOpenAccept(Sender: TObject);
-    procedure ActionProjectOptionsExecute(Sender: TObject);
-    procedure ActionProjectSaveAsAccept(Sender: TObject);
-    procedure ActionProjectSaveExecute(Sender: TObject);
-    procedure ActionRevertExecute(Sender: TObject);
-    procedure ActionSnapshotExecute(Sender: TObject);
+    procedure ActionFileOpenAccept(Sender: TObject);
+    procedure ActionFileOptionsExecute(Sender: TObject);
+    procedure ActionFileSaveAsAccept(Sender: TObject);
+    procedure ActionFileSaveExecute(Sender: TObject);
+    procedure ActionTakeSnapshotExecute(Sender: TObject);
     procedure ActionUpdateExecute(Sender: TObject);
     procedure CheckForUpdateTimerTimer(Sender: TObject);
     procedure MenuItemCheckAllClick(Sender: TObject);
@@ -202,8 +170,6 @@ uses
   ShellApi;
 
 resourcestring
-  RStrBaseURL = 'http://www.savioursofsoul.de/Christian/WebUpdate/';
-  RStrBaseFile = 'Channels.json';
   RStrFileNotFound = 'File %s not found';
   RStrNoFileSelected = 'No file selected for update!';
   RStrSavingChannelSetup = 'Saving channel setup...';
@@ -242,161 +208,6 @@ begin
       Result := InternalEncodeDateTime(wYear, wMonth, wDay, wHour, wMinute,
         wSecond, wMilliseconds);
     end;
-end;
-
-
-{ TWebUpdate }
-
-constructor TWebUpdate.Create;
-begin
-  FAutoGet := False;
-  FBaseURL := RStrBaseURL;
-  FChannelsFile := RStrBaseFile;
-  FChannelName := 'Stable';
-  FChannels := TWebUpdateChannels.Create;
-  FUpdaterFileName := 'Updater.exe';
-end;
-
-constructor TWebUpdate.Create(BaseURL: string; ChannelsFileName: TFileName);
-begin
-  Create;
-  FBaseURL := BaseURL;
-  FChannelsFile := ChannelsFileName;
-end;
-
-destructor TWebUpdate.Destroy;
-begin
-  FChannels.Free;
-  inherited;
-end;
-
-procedure TWebUpdate.PerformDownloadUpdater;
-var
-  Http: TIdHTTP;
-  Text: string;
-  Success: Boolean;
-begin
-  // get channels file (JSON) text
-  if StartsText('http://', FBaseURL) or StartsText('https://', FBaseURL) then
-  begin
-    Http := TIdHTTP.Create(nil);
-    try
-      try
-        // get text from URI
-        Text := Http.Get(FBaseURL + FUpdaterFileName);
-
-        // check if text is available (might need check for JSON format)
-        Success := Text <> '';
-      except
-        Success := False;
-      end;
-
-      // ignore errors here!
-      if not Success then
-        Exit;
-    finally
-      Http.Free;
-    end;
-  end
-  else
-    raise Exception.Create('Protocol not supported');
-end;
-
-procedure TWebUpdate.GetChannelsInformation;
-var
-  Http: TIdHTTP;
-  Text: string;
-  Success: Boolean;
-begin
-  // get channels file (JSON) text
-  if StartsText('http://', FBaseURL) or StartsText('https://', FBaseURL) then
-  begin
-    Http := TIdHTTP.Create(nil);
-    try
-      try
-        // get text from URI
-        Text := Http.Get(FBaseURL + FChannelsFile);
-
-        // check if text is available (might need check for JSON format)
-        Success := Text <> '';
-      except
-        Success := False;
-      end;
-
-      // ignore errors here!
-      if not Success then
-        Exit;
-    finally
-      Http.Free;
-    end;
-  end
-  else
-    raise Exception.Create('Protocol not supported');
-
-  FChannels.LoadFromString(Text);
-end;
-
-procedure TWebUpdate.GetCurrentChannelInformation;
-var
-  LocalPath: TFileName;
-  CurrentSetup: TWebUpdateChannelSetup;
-begin
-  // check if a local file is present otherwise exit
-  LocalPath := ExtractFilePath(ParamStr(0));
-  if not FileExists(LocalPath + 'WebUpdate.json') then
-    Exit;
-
-  CurrentSetup := TWebUpdateChannelSetup.Create;
-  try
-    CurrentSetup.LoadFromFile(LocalPath + 'WebUpdate.json');
-
-    FChannelName := CurrentSetup.ChannelName;
-  finally
-    CurrentSetup.Free;
-  end;
-end;
-
-function TWebUpdate.CheckForUpdate: Boolean;
-var
-  ChannelItem: TWebUpdateChannelItem;
-begin
-  Result := False;
-
-  // eventually get information about current channel
-  if FAutoGet then
-    GetCurrentChannelInformation;
-
-  // locate current channel
-  for ChannelItem in FChannels.Items do
-    if ChannelItem.Name = FChannelName then
-      if ChannelItem.Modified > FLastModified then
-        Exit(True);
-end;
-
-procedure TWebUpdate.PerformUpdate;
-var
-  CurrentPath: string;
-begin
-  // eventually download updater
-  if FDownloadUpdater then
-    PerformDownloadUpdater;
-
-  CurrentPath := ExtractFilePath(ParamStr(0));
-  if FileExists(CurrentPath + FUpdaterFileName) then
-  begin
-    ShellExecute(Application.Handle, 'open', PChar(CurrentPath + FUpdaterFileName),
-      nil, PChar(CurrentPath), SW_SHOW);
-    Application.Terminate;
-  end;
-end;
-
-procedure TWebUpdate.SetChannelName(const Value: string);
-begin
-  if FChannelName <> Value then
-  begin
-    FChannelName := Value;
-    FLastModified := 0;
-  end;
 end;
 
 
@@ -467,7 +278,7 @@ begin
     Exit(TreeChannels.GetNodeData(Node));
 end;
 
-procedure TFormWebUpdateTool.ActionChannelsAddExecute(Sender: TObject);
+procedure TFormWebUpdateTool.ActionAddChannelExecute(Sender: TObject);
 var
   Node: PVirtualNode;
   NodeData: PChannelItem;
@@ -480,7 +291,7 @@ begin
   FileAge(NodeData^.FileName, NodeData^.Modified);
 end;
 
-procedure TFormWebUpdateTool.ActionChannelsDeleteExecute(Sender: TObject);
+procedure TFormWebUpdateTool.ActionDeleteChannelExecute(Sender: TObject);
 begin
   if Assigned(TreeChannels.FocusedNode) then
     TreeChannels.DeleteNode(TreeChannels.FocusedNode);
@@ -529,7 +340,7 @@ begin
   SaveChannels;
 end;
 
-procedure TFormWebUpdateTool.ActionChannelsCopyUploadExecute(Sender: TObject);
+procedure TFormWebUpdateTool.ActionCopyUploadExecute(Sender: TObject);
 begin
 //  UploadSnapshot;
   CopySnapshot;
@@ -544,7 +355,7 @@ begin
       FWebUpdate.PerformUpdate;
 end;
 
-procedure TFormWebUpdateTool.ActionProjectOpenAccept(Sender: TObject);
+procedure TFormWebUpdateTool.ActionFileOpenAccept(Sender: TObject);
 var
   FileName: TFileName;
 begin
@@ -559,7 +370,7 @@ begin
   FPreferences.RecentProject := FileName;
 end;
 
-procedure TFormWebUpdateTool.ActionProjectSaveAsAccept(Sender: TObject);
+procedure TFormWebUpdateTool.ActionFileSaveAsAccept(Sender: TObject);
 var
   FileName: TFileName;
 begin
@@ -570,7 +381,7 @@ begin
   FPreferences.RecentProject := FileName;
 end;
 
-procedure TFormWebUpdateTool.ActionProjectSaveExecute(Sender: TObject);
+procedure TFormWebUpdateTool.ActionFileSaveExecute(Sender: TObject);
 begin
   if FPreferences.RecentProject <> '' then
   begin
@@ -579,45 +390,7 @@ begin
   end;
 end;
 
-procedure TFormWebUpdateTool.ActionRevertExecute(Sender: TObject);
-var
-  Node: PVirtualNode;
-  NodeData: PChannelItem;
-  ChannelFileName: TFileName;
-  ChannelSetup: TWebUpdateChannelSetup;
-begin
-  LoadChannels;
-
-  TreeChannels.BeginUpdate;
-  try
-    for Node in TreeChannels.Nodes do
-    begin
-      NodeData := TreeChannels.GetNodeData(Node);
-      ChannelFileName := Project.ChannelsPath +
-        {NodeData^.Name + '\' + } NodeData^.FileName;
-
-      // now check for file date
-      if FileExists(ChannelFileName) then
-      begin
-        ChannelSetup := TWebUpdateChannelSetup.Create;
-        try
-          ChannelSetup.LoadFromFile(ChannelFileName);
-          if NodeData^.Modified <> ChannelSetup.Modified then
-            if MessageDlg(Format('The setup for channel %s has changed!',
-              [NodeData^.Name])+#13#10#13#10 + 'Update channel list?',
-              mtConfirmation, [mbYes, mbNo], 0) = mrYes then
-              NodeData^.Modified := ChannelSetup.Modified;
-        finally
-          ChannelSetup.Free;
-        end;
-      end;
-    end;
-  finally
-    TreeChannels.EndUpdate;
-  end;
-end;
-
-procedure TFormWebUpdateTool.ActionSnapshotExecute(Sender: TObject);
+procedure TFormWebUpdateTool.ActionTakeSnapshotExecute(Sender: TObject);
 begin
   TakeSnapshot;
 end;
@@ -627,7 +400,7 @@ begin
   FWebUpdate.PerformUpdate;
 end;
 
-procedure TFormWebUpdateTool.ActionProjectOptionsExecute(Sender: TObject);
+procedure TFormWebUpdateTool.ActionFileOptionsExecute(Sender: TObject);
 begin
   with TFormOptions.Create(Self) do
   try
@@ -657,7 +430,7 @@ begin
   end;
 end;
 
-procedure TFormWebUpdateTool.ActionChannelScanExecute(Sender: TObject);
+procedure TFormWebUpdateTool.ActionScanFilesExecute(Sender: TObject);
 begin
   ScanDirectory(Project.BaseDirectory);
 end;

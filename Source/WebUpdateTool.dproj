@@ -99,12 +99,13 @@
 			<DCCReference Include="WebUpdate.MD5.pas"/>
 			<DCCReference Include="WebUpdate.Project.JSON.pas"/>
 			<DCCReference Include="WebUpdate.Preferences.JSON.pas"/>
-			<DCCReference Include="WebUpdate.Main.pas">
+			<DCCReference Include="WebUpdate.AuthorTool.pas">
 				<Form>FormWebUpdateTool</Form>
 			</DCCReference>
 			<DCCReference Include="WebUpdate.Options.GUI.pas">
 				<Form>FormOptions</Form>
 			</DCCReference>
+			<DCCReference Include="WebUpdate.WebUpdate.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

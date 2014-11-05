@@ -8,8 +8,9 @@ uses
   WebUpdate.MD5 in 'WebUpdate.MD5.pas',
   WebUpdate.Project.JSON in 'WebUpdate.Project.JSON.pas',
   WebUpdate.Preferences.JSON in 'WebUpdate.Preferences.JSON.pas',
-  WebUpdate.Main in 'WebUpdate.Main.pas' {FormWebUpdateTool},
-  WebUpdate.Options.GUI in 'WebUpdate.Options.GUI.pas' {FormOptions};
+  WebUpdate.AuthorTool in 'WebUpdate.AuthorTool.pas' {FormWebUpdateTool},
+  WebUpdate.Options.GUI in 'WebUpdate.Options.GUI.pas' {FormOptions},
+  WebUpdate.WebUpdate in 'WebUpdate.WebUpdate.pas';
 
 {$R *.res}
 
