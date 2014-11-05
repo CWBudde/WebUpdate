@@ -12,6 +12,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
   Font.Style = []
   Menu = MainMenu
   OldCreateOrder = False
+  OnClose = FormClose
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
@@ -20,7 +21,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
   TextHeight = 13
   object Splitter: TSplitter
     Left = 0
-    Top = 193
+    Top = 128
     Width = 528
     Height = 3
     Cursor = crVSplit
@@ -38,9 +39,9 @@ object FormWebUpdateTool: TFormWebUpdateTool
   end
   object PanelFiles: TPanel
     Left = 0
-    Top = 196
+    Top = 131
     Width = 528
-    Height = 246
+    Height = 311
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 1
@@ -48,7 +49,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
       Left = 0
       Top = 0
       Width = 528
-      Height = 246
+      Height = 311
       Align = alClient
       Header.AutoSizeIndex = 0
       Header.Font.Charset = DEFAULT_CHARSET
@@ -86,7 +87,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
     Left = 0
     Top = 0
     Width = 528
-    Height = 193
+    Height = 128
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 2
@@ -116,15 +117,15 @@ object FormWebUpdateTool: TFormWebUpdateTool
         Top = 0
         Action = ActionDeleteChannel
       end
-      object ToolButton2: TToolButton
+      object Separator2: TToolButton
         Left = 200
         Top = 0
         Width = 8
-        Caption = 'ToolButton2'
+        Caption = 'Separator2'
         ImageIndex = 10
         Style = tbsSeparator
       end
-      object ToolButton1: TToolButton
+      object ToolButtonScanFiles: TToolButton
         Left = 208
         Top = 0
         Action = ActionScanFiles
@@ -142,7 +143,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
         Top = 0
         Action = ActionTakeSnapshot
       end
-      object ToolButton4: TToolButton
+      object ToolButtonCopyUpload: TToolButton
         Left = 416
         Top = 0
         Action = ActionCopyUpload
@@ -152,7 +153,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
       Left = 0
       Top = 26
       Width = 528
-      Height = 167
+      Height = 102
       Align = alClient
       Header.AutoSizeIndex = 0
       Header.Font.Charset = DEFAULT_CHARSET
@@ -189,17 +190,10 @@ object FormWebUpdateTool: TFormWebUpdateTool
         end>
     end
   end
-  object UpDown1: TUpDown
-    Left = 264
-    Top = 240
-    Width = 16
-    Height = 24
-    TabOrder = 3
-  end
   object MainMenu: TMainMenu
     Images = Images
-    Left = 40
-    Top = 104
+    Left = 32
+    Top = 72
     object MenuItemFile: TMenuItem
       Caption = '&File'
       object MenuItemFileOpen: TMenuItem
@@ -226,6 +220,34 @@ object FormWebUpdateTool: TFormWebUpdateTool
     end
     object MenuItemView: TMenuItem
       Caption = '&View'
+      object ChannelFiles1: TMenuItem
+        Action = ActionViewChannel
+        AutoCheck = True
+      end
+    end
+    object MenuItemProject: TMenuItem
+      Caption = '&Project'
+      object MenuItemProjectAddChannel: TMenuItem
+        Action = ActionAddChannel
+      end
+      object MenuItemProjectDeleteChannel: TMenuItem
+        Action = ActionDeleteChannel
+      end
+      object N5: TMenuItem
+        Caption = '-'
+      end
+      object MenuItemProjectScanFiles: TMenuItem
+        Action = ActionScanFiles
+      end
+      object N6: TMenuItem
+        Caption = '-'
+      end
+      object MenuItemProjectSnapshot: TMenuItem
+        Action = ActionTakeSnapshot
+      end
+      object MenuItemProjectCopyUpload: TMenuItem
+        Action = ActionCopyUpload
+      end
     end
     object MenuItemTools: TMenuItem
       Caption = '&Update'
@@ -262,11 +284,11 @@ object FormWebUpdateTool: TFormWebUpdateTool
   end
   object ActionList: TActionList
     Images = Images
-    Left = 168
-    Top = 104
+    Left = 160
+    Top = 72
     object ActionScanFiles: TAction
       Category = 'Project'
-      Caption = '&Scan Files'
+      Caption = 'Scan &Files'
       ImageIndex = 4
       OnExecute = ActionScanFilesExecute
     end
@@ -337,15 +359,22 @@ object FormWebUpdateTool: TFormWebUpdateTool
     end
     object ActionTakeSnapshot: TAction
       Category = 'Project'
-      Caption = 'Snapshot'
+      Caption = '&Snapshot'
       ImageIndex = 11
       OnExecute = ActionTakeSnapshotExecute
+    end
+    object ActionViewChannel: TAction
+      Category = 'View'
+      AutoCheck = True
+      Caption = 'Channel Files'
+      Checked = True
+      OnExecute = ActionViewChannelExecute
     end
   end
   object Images: TImageList
     ColorDepth = cd32Bit
-    Left = 104
-    Top = 104
+    Left = 96
+    Top = 72
     Bitmap = {
       494C01010F001100040010001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000004000000001002000000000000040
@@ -885,8 +914,8 @@ object FormWebUpdateTool: TFormWebUpdateTool
   object CheckForUpdateTimer: TTimer
     Interval = 3000
     OnTimer = CheckForUpdateTimerTimer
-    Left = 328
-    Top = 104
+    Left = 320
+    Top = 72
   end
   object PopupMenu: TPopupMenu
     Left = 168

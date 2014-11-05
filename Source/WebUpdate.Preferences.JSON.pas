@@ -12,6 +12,7 @@ type
     FRecentProject: TFileName;
     FTop: Integer;
     FLeft: Integer;
+    FViewFiles: Boolean;
     procedure Load;
     procedure Save;
   protected
@@ -26,6 +27,7 @@ type
     property Left: Integer read FLeft write FLeft;
     property Top: Integer read FTop write FTop;
     property RecentProject: TFileName read FRecentProject write FRecentProject;
+    property ViewFiles: Boolean read FViewFiles write FViewFiles;
   end;
 
 implementation
@@ -37,6 +39,8 @@ uses
 
 constructor TWebUpdatePreferences.Create(FileName: TFileName);
 begin
+  FLeft := 16;
+  FTop := 16;
   FFileName := FileName;
   if FileExists(FFileName) then
     Load;
@@ -69,12 +73,18 @@ var
 begin
   inherited;
 
+  // read window position
   Value := Root.Items['Left'];
   if Assigned(Value) then
     FLeft := Value.AsInteger;
   Value := Root.Items['Top'];
   if Assigned(Value) then
     FTop := Value.AsInteger;
+
+  // read view files
+  Value := Root.Items['ViewFiles'];
+  if Assigned(Value) then
+    FViewFiles := Value.AsBoolean;
 
   // read recent project
   Value := Root.Items['RecentProject'];
@@ -86,9 +96,14 @@ procedure TWebUpdatePreferences.Write(Root: TdwsJSONObject);
 begin
   inherited;
 
+  // write window position
   Root.AddValue('Left').AsInteger := FLeft;
   Root.AddValue('Top').AsInteger := FTop;
 
+  // write view files
+  Root.AddValue('ViewFiles').AsBoolean := FViewFiles;
+
+  // write recent project
   if FRecentProject <> '' then
     Root.AddValue('RecentProject').AsString := FRecentProject;
 end;

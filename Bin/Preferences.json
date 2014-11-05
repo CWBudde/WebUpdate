@@ -1,6 +1,7 @@
 {
 	"ID" : "Preferences",
-	"Left" : 0,
-	"Top" : 0,
+	"Left" : 667,
+	"Top" : 349,
+	"ViewFiles" : true,
 	"RecentProject" : "WebUpdate.wup"
 }
