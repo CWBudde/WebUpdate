@@ -2,6 +2,8 @@ unit WebUpdate.AuthorTool;
 
 interface
 
+// TODO: Add command line commands
+
 uses
   System.StrUtils, System.Types, System.SysUtils, System.Classes,
   Winapi.Windows, Winapi.Messages, Vcl.Graphics, Vcl.Controls, Vcl.Forms,
@@ -43,7 +45,6 @@ type
     ActionTakeSnapshot: TAction;
     ActionUpdate: TAction;
     ActionViewChannel: TAction;
-    ChannelFiles1: TMenuItem;
     CheckForUpdateTimer: TTimer;
     Images: TImageList;
     MainMenu: TMainMenu;
@@ -62,6 +63,7 @@ type
     MenuItemProjectScanFiles: TMenuItem;
     MenuItemProjectSnapshot: TMenuItem;
     MenuItemSaveAs: TMenuItem;
+    MenuItemsViewChannelFiles: TMenuItem;
     MenuItemTools: TMenuItem;
     MenuItemToolsUpdate: TMenuItem;
     MenuItemUpdateAlpha: TMenuItem;
@@ -893,6 +895,22 @@ begin
     end;
 end;
 
+function FormatByteSize(const ByteSize: Int64): string;
+const
+  CkB = 1000; // kilobyte
+  CMB = 1000 * CkB; // megabyte
+  CGB = 1000 * CMB; // gigabyte
+begin
+  if ByteSize > CGB then
+    Result := FormatFloat('#.### GB', ByteSize / CGB)
+  else if ByteSize > CMB then
+    Result := FormatFloat('#.### MB', ByteSize / CMB)
+  else if ByteSize > CkB then
+    Result := FormatFloat('#.### kB', ByteSize / CkB)
+  else
+    Result := FormatFloat('#.### Bytes', ByteSize);
+end;
+
 procedure TFormWebUpdateTool.TreeFileListGetText(Sender: TBaseVirtualTree;
   Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType;
   var CellText: string);
@@ -907,7 +925,79 @@ begin
     1:
       if NodeData^.FileName <> '' then
         CellText := DateTimeToStr(NodeData^.Modified);
+    2:
+      if NodeData^.FileName <> '' then
+        CellText := FormatByteSize(NodeData^.Size);
   end;
+end;
+
+procedure TFormWebUpdateTool.CopySnapshot;
+var
+  Path: string;
+  ChannelSetup: TWebUpdateChannelSetup;
+  FileItem: TWebUpdateFileItem;
+  ChannelName: string;
+  RealFileName, ChannelFileName, DestFileName: TFileName;
+  NodeData: PChannelItem;
+begin
+  Path := IncludeTrailingPathDelimiter(Project.Copy.Path);
+  if IsRelativePath(Path) then
+    Path := Project.BasePath + Path;
+
+  // get currently checked channel node
+  NodeData := GetCurrentChannelNodeData;
+  if not Assigned(NodeData) then
+    Exit;
+
+  ChannelName := NodeData^.Name;
+  ChannelFileName := Project.ChannelsPath + // ChannelName + '\' +
+    NodeData^.FileName;
+
+  // upload files
+  ChannelSetup := TWebUpdateChannelSetup.Create;
+  try
+    // load channel setup
+    ChannelSetup.LoadFromFile(ChannelFileName);
+
+    // ensure the date is set identical in both JSON files
+    if ChannelSetup.Modified <> NodeData^.Modified then
+      if MessageDlg('Time stamp mismatch. Continue?', mtWarning, [mbYes, mbNo], 0) = mrNo then
+        Exit;
+
+    for FileItem in ChannelSetup.Items do
+    begin
+      WriteStatus('Copying file ' + FileItem.FileName + '...');
+
+      RealFileName := Project.BasePath + StringReplace(
+        FileItem.FileName, '/', '\', [rfReplaceAll]);
+
+      // copy file
+      DestFileName := ExpandFileName(Path + ChannelName + '\' + FileItem.FileName);
+      ForceDirectories(ExtractFileDir(DestFileName));
+      CopyFile(PChar(RealFileName), PChar(DestFileName), True);
+
+      // set file date/time according to the JSON file
+      FileSetDate(DestFileName, DateTimeToFileDate(FileItem.Modified));
+    end;
+  finally
+    ChannelSetup.Free;
+  end;
+
+  // copy channel setup
+  WriteStatus('Copying channel setup...');
+  DestFileName := ExpandFileName(Path + ChannelName + '\' + NodeData^.FileName);
+  ForceDirectories(ExtractFileDir(DestFileName));
+  CopyFile(PChar(ChannelFileName), PChar(DestFileName), True);
+
+  // set file date/time according to the JSON file
+  FileSetDate(DestFileName, DateTimeToFileDate(NodeData^.Modified));
+
+  // copy channel file
+  WriteStatus('Copying channels list...');
+  DestFileName := ExpandFileName(Path + ExtractFileName(FProject.ChannelsFilename));
+  CopyFile(PChar(FProject.FullChannelsFilename), PChar(DestFileName), True);
+
+  ClearStatus;
 end;
 
 procedure TFormWebUpdateTool.UploadSnapshot;
@@ -939,18 +1029,26 @@ begin
     Password := Project.FTP.Password;
     Connect;
     try
-
       // upload files
       ChannelSetup := TWebUpdateChannelSetup.Create;
       try
+        // load channel setup
         ChannelSetup.LoadFromFile(ChannelFileName);
+
+        // ensure the date is set identical in both JSON files
+        if ChannelSetup.Modified <> NodeData^.Modified then
+          if MessageDlg('Time stamp mismatch. Continue?', mtWarning, [mbYes, mbNo], 0) = mrNo then
+            Exit;
+
         for FileItem in ChannelSetup.Items do
         begin
           WriteStatus('Uploading: ' + FileItem.FileName);
 
+          // upload file
           RealFileName := Project.BasePath + StringReplace(
             FileItem.FileName, '/', '\', [rfReplaceAll]);
           Put(RealFileName, ChannelName + '/' + FileItem.FileName);
+          SetModTime(RealFileName, FileItem.Modified);
         end;
       finally
         ChannelSetup.Free;
@@ -960,6 +1058,7 @@ begin
 
       // upload channel setup
       Put(ChannelFileName, ChannelWebName);
+      SetModTime(ChannelFileName, NodeData^.Modified);
 
       WriteStatus('Uploading channels list...');
 
@@ -973,63 +1072,6 @@ begin
   finally
     Free;
   end;
-end;
-
-procedure TFormWebUpdateTool.CopySnapshot;
-var
-  Path: string;
-  ChannelSetup: TWebUpdateChannelSetup;
-  FileItem: TWebUpdateFileItem;
-  ChannelName: string;
-  RealFileName, ChannelFileName, DestFileName: TFileName;
-  NodeData: PChannelItem;
-begin
-  Path := IncludeTrailingPathDelimiter(Project.Copy.Path);
-  if IsRelativePath(Path) then
-    Path := Project.BasePath + Path;
-
-  // get currently checked channel node
-  NodeData := GetCurrentChannelNodeData;
-  if not Assigned(NodeData) then
-    Exit;
-
-  ChannelName := NodeData^.Name;
-  ChannelFileName := Project.ChannelsPath + // ChannelName + '\' +
-    NodeData^.FileName;
-
-  // upload files
-  ChannelSetup := TWebUpdateChannelSetup.Create;
-  try
-    ChannelSetup.LoadFromFile(ChannelFileName);
-    for FileItem in ChannelSetup.Items do
-    begin
-      WriteStatus('Copying file ' + FileItem.FileName + '...');
-
-      RealFileName := Project.BasePath + StringReplace(
-        FileItem.FileName, '/', '\', [rfReplaceAll]);
-
-      DestFileName := ExpandFileName(Path + ChannelName + '\' + FileItem.FileName);
-      ForceDirectories(ExtractFileDir(DestFileName));
-      CopyFile(PWideChar(RealFileName), PWideChar(DestFileName), True);
-    end;
-  finally
-    ChannelSetup.Free;
-  end;
-
-  WriteStatus('Uploading channel setup...');
-
-  // upload channel setup
-  DestFileName := ExpandFileName(Path + ChannelName + '\' + NodeData^.FileName);
-  ForceDirectories(ExtractFileDir(DestFileName));
-  CopyFile(PWideChar(ChannelFileName), PWideChar(DestFileName), True);
-
-  WriteStatus('Uploading channels list...');
-
-  // upload channel file
-  DestFileName := ExpandFileName(Path + ExtractFileName(FProject.ChannelsFilename));
-  CopyFile(PWideChar(FProject.FullChannelsFilename), PWideChar(DestFileName), True);
-
-  ClearStatus;
 end;
 
 procedure TFormWebUpdateTool.ClearStatus;

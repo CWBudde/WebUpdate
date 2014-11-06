@@ -72,14 +72,20 @@ object FormWebUpdateTool: TFormWebUpdateTool
         item
           Options = [coAllowClick, coDraggable, coEnabled, coParentBidiMode, coParentColor, coResizable, coShowDropMark, coVisible, coAutoSpring, coSmartResize, coAllowFocus, coEditable]
           Position = 0
-          Width = 128
+          Width = 248
           WideText = 'Name'
         end
         item
           Options = [coAllowClick, coDraggable, coEnabled, coParentBidiMode, coParentColor, coResizable, coShowDropMark, coVisible, coAutoSpring, coSmartResize, coAllowFocus, coEditable]
           Position = 1
-          Width = 396
+          Width = 176
           WideText = 'Modified'
+        end
+        item
+          Options = [coAllowClick, coDraggable, coEnabled, coParentBidiMode, coParentColor, coResizable, coShowDropMark, coVisible, coAutoSpring, coSmartResize, coAllowFocus, coEditable]
+          Position = 2
+          Width = 100
+          WideText = 'Size'
         end>
     end
   end
@@ -220,7 +226,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
     end
     object MenuItemView: TMenuItem
       Caption = '&View'
-      object ChannelFiles1: TMenuItem
+      object MenuItemsViewChannelFiles: TMenuItem
         Action = ActionViewChannel
         AutoCheck = True
       end

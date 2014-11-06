@@ -451,7 +451,14 @@ begin
 end;
 
 procedure TFormWebUpdate.ScanParameters;
+var
+  Index: Integer;
 begin
+  for Index := 1 to ParamCount do
+  begin
+
+  end;
+
   LoadChannelsFromURI(RStrBaseURL + RStrBaseFile);
 
   if FileExists(FLocalBasePath + 'WebUpdate.json') then
