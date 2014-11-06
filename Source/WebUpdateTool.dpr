@@ -1,5 +1,7 @@
 program WebUpdateTool;
 
+{$DEFINE SupportsConsole}
+
 uses
   Vcl.Forms,
   WebUpdate.Channel.JSON in 'WebUpdate.Channel.JSON.pas',
@@ -10,7 +12,8 @@ uses
   WebUpdate.Preferences.JSON in 'WebUpdate.Preferences.JSON.pas',
   WebUpdate.AuthorTool in 'WebUpdate.AuthorTool.pas' {FormWebUpdateTool},
   WebUpdate.Options.GUI in 'WebUpdate.Options.GUI.pas' {FormOptions},
-  WebUpdate.WebUpdate in 'WebUpdate.WebUpdate.pas';
+  WebUpdate.WebUpdate in 'WebUpdate.WebUpdate.pas',
+  WebUpdate.GUI.About in 'WebUpdate.GUI.About.pas' {Form1};
 
 {$R *.res}
 
@@ -18,6 +21,8 @@ begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TFormWebUpdateTool, FormWebUpdateTool);
-  Application.Run;
+  Application.CreateForm(TForm1, Form1);
+  if not Application.Terminated then
+    Application.Run;
 end.
 

@@ -1,13 +1,13 @@
 {
 	"ID" : "Channel",
-	"Modified" : "2014-11-06T01:06:14.187",
+	"Modified" : "2014-11-06T13:27:53.038",
 	"Name" : "Nightly",
 	"Files" : [
 		{
 			"FileName" : "WebUpdateTool.exe",
-			"Size" : 14238056,
-			"Modified" : "2014-11-06T01:06:14.187",
-			"MD5" : 1047802841
+			"Size" : 14233838,
+			"Modified" : "2014-11-06T13:27:53.038",
+			"MD5" : -514452001
 		}
 	],
 	"AppName" : "WebUpdateTool.exe"

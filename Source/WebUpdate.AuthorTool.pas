@@ -93,6 +93,11 @@ type
     ToolButtonScanFiles: TToolButton;
     TreeChannels: TVirtualStringTree;
     TreeFileList: TVirtualStringTree;
+    MenuItemHelp: TMenuItem;
+    MenuItemHelpAbout: TMenuItem;
+    N7: TMenuItem;
+    MenuItemHelpDocumentation: TMenuItem;
+    MenuItemHelpCommandlineSwitches: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -141,6 +146,8 @@ type
     FWebUpdate: TWebUpdate;
     FProjectModified: Boolean;
 
+    procedure ScanParameters;
+
     procedure ClearStatus;
     procedure WriteStatus(Text: string);
 
@@ -150,17 +157,16 @@ type
 
     procedure CollectFileProgressEventHandler(const Directory: string; var SkipScan: Boolean);
 
+    procedure WorkEventHandler(ASender: TObject; AWorkMode: TWorkMode; AWorkCount: Int64);
+  protected
     procedure SetupDefaultChannels;
     procedure LoadChannels;
     procedure SaveChannels;
-
-    procedure WorkEventHandler(ASender: TObject; AWorkMode: TWorkMode; AWorkCount: Int64);
   public
+    procedure ScanDirectory;
     procedure TakeSnapshot;
     procedure UploadSnapshot;
     procedure CopySnapshot;
-
-    procedure ScanDirectory(const BaseDirectory: string);
 
     property Project: TWebUpdateProject read FProject;
   end;
@@ -251,6 +257,8 @@ begin
   // create & setup self update
   FWebUpdate := TWebUpdate.Create;
   FWebUpdate.GetCurrentChannelInformation;
+
+  ScanParameters;
 end;
 
 procedure TFormWebUpdateTool.FormDestroy(Sender: TObject);
@@ -432,7 +440,7 @@ end;
 
 procedure TFormWebUpdateTool.ActionScanFilesExecute(Sender: TObject);
 begin
-  ScanDirectory(Project.BaseDirectory);
+  ScanDirectory;
 end;
 
 procedure TFormWebUpdateTool.CollectFileProgressEventHandler(
@@ -516,8 +524,9 @@ begin
     Result := LocateNode(Result, FileStrings[Level]);
 end;
 
-procedure TFormWebUpdateTool.ScanDirectory(const BaseDirectory: string);
+procedure TFormWebUpdateTool.ScanDirectory;
 var
+  BaseDirectory: string;
   FileStrings: TStringDynArray;
   FileList: TStringList;
   FileName: TFileName;
@@ -527,6 +536,7 @@ var
   BasePath: string;
   Fad: TWin32FileAttributeData;
 begin
+  BaseDirectory := Project.BaseDirectory;
   TreeFileList.BeginUpdate;
   try
     FileList := TStringList.Create;
@@ -566,6 +576,23 @@ begin
   end;
 
   ClearStatus;
+end;
+
+procedure TFormWebUpdateTool.ScanParameters;
+var
+  ParamIndex: Integer;
+begin
+  for ParamIndex := 1 to ParamCount do
+  begin
+    ShowMessage(ParamStr(ParamIndex));
+  end;
+(*
+  if ParamCount > 0 then
+  begin
+    WriteLn('Bla');
+    ReadLn;
+  end;
+*)
 end;
 
 procedure TFormWebUpdateTool.LoadChannels;
@@ -708,6 +735,7 @@ begin
       // update file attributes
       NodeData^.Size := Fad.nFileSizeLow;
       NodeData^.Modified := FileTimeToDateTime(Fad.ftLastWriteTime);
+      TreeFileList.RepaintNode(Node);
 
       // create (& update) file item
       Item := TWebUpdateFileItem.Create;
@@ -732,6 +760,7 @@ begin
   end;
 
   SaveChannels;
+  TreeChannels.Invalidate;
 
   // eventually copy to path and upload to a server
   if Project.AutoCopyUpload then

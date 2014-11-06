@@ -261,6 +261,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
         Caption = '&Select Channel'
         object MenuItemUpdateStable: TMenuItem
           Caption = '&Stable'
+          Checked = True
           RadioItem = True
           OnClick = MenuItemUpdateStableClick
         end
@@ -285,6 +286,21 @@ object FormWebUpdateTool: TFormWebUpdateTool
       end
       object MenuItemCheckForUpdates: TMenuItem
         Action = ActionCheckUpdate
+      end
+    end
+    object MenuItemHelp: TMenuItem
+      Caption = '&Help'
+      object MenuItemHelpAbout: TMenuItem
+        Caption = '&About'
+      end
+      object N7: TMenuItem
+        Caption = '-'
+      end
+      object MenuItemHelpCommandlineSwitches: TMenuItem
+        Caption = '&Command-line switches'
+      end
+      object MenuItemHelpDocumentation: TMenuItem
+        Caption = '&Documentation'
       end
     end
   end
