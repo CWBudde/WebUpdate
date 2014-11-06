@@ -1,4 +1,4 @@
-unit WebUpdate.Project.JSON;
+unit WebUpdate.JSON.Project;
 
 interface
 

@@ -94,23 +94,25 @@
 			<DelphiCompile Include="$(MainSource)">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="WebUpdate.Channel.JSON.pas"/>
-			<DCCReference Include="WebUpdate.Channels.JSON.pas"/>
-			<DCCReference Include="WebUpdate.JSON.Serializer.pas"/>
-			<DCCReference Include="WebUpdate.MD5.pas"/>
-			<DCCReference Include="WebUpdate.Project.JSON.pas"/>
-			<DCCReference Include="WebUpdate.Preferences.JSON.pas"/>
-			<DCCReference Include="WebUpdate.AuthorTool.pas">
+			<DCCReference Include="WebUpdate.GUI.About.pas">
+				<Form>FormAbout</Form>
+			</DCCReference>
+			<DCCReference Include="WebUpdate.GUI.AuthorTool.pas">
 				<Form>FormWebUpdateTool</Form>
 			</DCCReference>
-			<DCCReference Include="WebUpdate.Options.GUI.pas">
+			<DCCReference Include="WebUpdate.GUI.Options.pas">
 				<Form>FormOptions</Form>
 			</DCCReference>
-			<DCCReference Include="WebUpdate.WebUpdate.pas"/>
-			<DCCReference Include="WebUpdate.GUI.About.pas">
-				<Form>Form1</Form>
-				<FormType>dfm</FormType>
+			<DCCReference Include="WebUpdate.GUI.CommandLine.pas">
+				<Form>FormCommandLine</Form>
 			</DCCReference>
+			<DCCReference Include="WebUpdate.JSON.Channel.pas"/>
+			<DCCReference Include="WebUpdate.JSON.Channels.pas"/>
+			<DCCReference Include="WebUpdate.JSON.Preferences.pas"/>
+			<DCCReference Include="WebUpdate.JSON.Project.pas"/>
+			<DCCReference Include="WebUpdate.JSON.Serializer.pas"/>
+			<DCCReference Include="WebUpdate.MD5.pas"/>
+			<DCCReference Include="WebUpdate.WebUpdate.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

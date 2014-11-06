@@ -1,4 +1,4 @@
-unit WebUpdate.Options.GUI;
+unit WebUpdate.GUI.Options;
 
 interface
 
@@ -17,32 +17,32 @@ type
   TFormOptions = class(TForm)
     ButtonCancel: TButton;
     ButtonOK: TButton;
+    CheckBoxAutoCopyUpload: TCheckBox;
+    CheckBoxCopyTo: TCheckBox;
+    EditBaseDirectory: TJvDirectoryEdit;
+    EditChannelFileName: TJvFilenameEdit;
+    EditCopyPath: TEdit;
+    EditFtpPassword: TEdit;
+    EditFtpServer: TEdit;
+    EditFtpUsername: TEdit;
+    GroupBoxCopy: TGroupBox;
+    GroupBoxFTP: TGroupBox;
+    LabelChannelFileName: TLabel;
     LabelFileName: TLabel;
+    LabelPassword: TLabel;
+    LabelServer: TLabel;
+    LabelUsername: TLabel;
     PageControl: TPageControl;
     Panel: TPanel;
-    TabSheetMain: TTabSheet;
     TabSheetFTP: TTabSheet;
+    TabSheetMain: TTabSheet;
     TreeOptions: TVirtualStringTree;
-    LabelChannelFileName: TLabel;
-    EditChannelFileName: TJvFilenameEdit;
-    EditBaseDirectory: TJvDirectoryEdit;
-    CheckBoxAutoCopyUpload: TCheckBox;
-    GroupBoxFTP: TGroupBox;
-    EditFtpPassword: TEdit;
-    LabelPassword: TLabel;
-    EditFtpUsername: TEdit;
-    LabelUsername: TLabel;
-    EditFtpServer: TEdit;
-    LabelServer: TLabel;
-    GroupBoxCopy: TGroupBox;
-    CheckBoxCopyTo: TCheckBox;
-    EditCopyPath: TEdit;
     procedure FormCreate(Sender: TObject);
+    procedure EditChannelFileNameAfterDialog(Sender: TObject; var AName: string;
+      var AAction: Boolean);
     procedure TreeOptionsGetText(Sender: TBaseVirtualTree; Node: PVirtualNode;
       Column: TColumnIndex; TextType: TVSTTextType; var CellText: string);
     procedure TreeOptionsChange(Sender: TBaseVirtualTree; Node: PVirtualNode);
-    procedure EditChannelFileNameAfterDialog(Sender: TObject; var AName: string;
-      var AAction: Boolean);
   private
     procedure SetupTree;
   end;

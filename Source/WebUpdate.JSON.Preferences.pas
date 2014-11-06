@@ -1,4 +1,4 @@
-unit WebUpdate.Preferences.JSON;
+unit WebUpdate.JSON.Preferences;
 
 interface
 

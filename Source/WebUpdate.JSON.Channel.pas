@@ -1,4 +1,4 @@
-unit WebUpdate.Channel.JSON;
+unit WebUpdate.JSON.Channel;
 
 interface
 

@@ -1,4 +1,4 @@
-unit WebUpdate.AuthorTool;
+unit WebUpdate.GUI.AuthorTool;
 
 interface
 
@@ -9,8 +9,8 @@ uses
   Winapi.Windows, Winapi.Messages, Vcl.Graphics, Vcl.Controls, Vcl.Forms,
   Vcl.Dialogs, Vcl.ComCtrls, Vcl.ToolWin, Vcl.Menus, Vcl.ActnList,
   Vcl.StdActns, Vcl.ImgList, Vcl.StdCtrls, Vcl.ExtCtrls,
-  IdComponent, VirtualTrees, WebUpdate.Preferences.JSON, WebUpdate.WebUpdate,
-  WebUpdate.Project.JSON, WebUpdate.Channels.JSON, WebUpdate.Channel.JSON;
+  IdComponent, VirtualTrees, WebUpdate.JSON.Preferences, WebUpdate.JSON.Project,
+  WebUpdate.JSON.Channels, WebUpdate.JSON.Channel, WebUpdate.WebUpdate;
 
 type
   TChannelItem = record
@@ -33,13 +33,16 @@ type
   TFormWebUpdateTool = class(TForm)
     ActionAddChannel: TAction;
     ActionCheckUpdate: TAction;
+    ActionCommandLine: TAction;
     ActionCopyUpload: TAction;
     ActionDeleteChannel: TAction;
+    ActionDocumentation: TAction;
     ActionFileExit: TFileExit;
     ActionFileOpen: TFileOpen;
     ActionFileOptions: TAction;
     ActionFileSave: TAction;
     ActionFileSaveAs: TFileSaveAs;
+    ActionHelpAbout: TAction;
     ActionList: TActionList;
     ActionScanFiles: TAction;
     ActionTakeSnapshot: TAction;
@@ -55,6 +58,10 @@ type
     MenuItemFile: TMenuItem;
     MenuItemFileOpen: TMenuItem;
     MenuItemFileSave: TMenuItem;
+    MenuItemHelp: TMenuItem;
+    MenuItemHelpAbout: TMenuItem;
+    MenuItemHelpCommandlineSwitches: TMenuItem;
+    MenuItemHelpDocumentation: TMenuItem;
     MenuItemProject: TMenuItem;
     MenuItemProjectAddChannel: TMenuItem;
     MenuItemProjectCopyUpload: TMenuItem;
@@ -77,6 +84,7 @@ type
     N4: TMenuItem;
     N5: TMenuItem;
     N6: TMenuItem;
+    N7: TMenuItem;
     PanelChannels: TPanel;
     PanelFiles: TPanel;
     PopupMenu: TPopupMenu;
@@ -93,11 +101,6 @@ type
     ToolButtonScanFiles: TToolButton;
     TreeChannels: TVirtualStringTree;
     TreeFileList: TVirtualStringTree;
-    MenuItemHelp: TMenuItem;
-    MenuItemHelpAbout: TMenuItem;
-    N7: TMenuItem;
-    MenuItemHelpDocumentation: TMenuItem;
-    MenuItemHelpCommandlineSwitches: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -137,6 +140,8 @@ type
       var Ghosted: Boolean; var ImageIndex: Integer);
     procedure TreeFileListCompareNodes(Sender: TBaseVirtualTree; Node1,
       Node2: PVirtualNode; Column: TColumnIndex; var Result: Integer);
+    procedure ActionHelpAboutExecute(Sender: TObject);
+    procedure ActionCommandLineExecute(Sender: TObject);
   private
     FProject: TWebUpdateProject;
     FPreferences: TWebUpdatePreferences;
@@ -179,9 +184,9 @@ implementation
 {$R *.dfm}
 
 uses
-  IdHTTP, IdFtp, dwsUtils, dwsXPlatform, dwsJSON,
-  WebUpdate.Options.GUI, WebUpdate.JSON.Serializer, WebUpdate.MD5,
-  ShellApi;
+  WinApi.ShellApi, IdHTTP, IdFtp, dwsUtils, dwsXPlatform, dwsJSON,
+  WebUpdate.GUI.Options, WebUpdate.GUI.About, WebUpdate.GUI.CommandLine,
+  WebUpdate.JSON.Serializer, WebUpdate.MD5;
 
 resourcestring
   RStrFileNotFound = 'File %s not found';
@@ -328,6 +333,16 @@ begin
     TreeChannels.DeleteNode(TreeChannels.FocusedNode);
 end;
 
+procedure TFormWebUpdateTool.ActionCommandLineExecute(Sender: TObject);
+begin
+  with TFormCommandLine.Create(Self) do
+  try
+    ShowModal;
+  finally
+    Free;
+  end;
+end;
+
 procedure TFormWebUpdateTool.ActionCopyUploadExecute(Sender: TObject);
 begin
   UploadSnapshot;
@@ -375,6 +390,16 @@ begin
   begin
     FProject.SaveToFile(FPreferences.RecentProject);
     FProjectModified := False;
+  end;
+end;
+
+procedure TFormWebUpdateTool.ActionHelpAboutExecute(Sender: TObject);
+begin
+  with TFormAbout.Create(Self) do
+  try
+    ShowModal;
+  finally
+    Free;
   end;
 end;
 
@@ -584,15 +609,9 @@ var
 begin
   for ParamIndex := 1 to ParamCount do
   begin
-    ShowMessage(ParamStr(ParamIndex));
+//    StartsText('-Channel:')
+//    ShowMessage(ParamStr(ParamIndex));
   end;
-(*
-  if ParamCount > 0 then
-  begin
-    WriteLn('Bla');
-    ReadLn;
-  end;
-*)
 end;
 
 procedure TFormWebUpdateTool.LoadChannels;
@@ -915,11 +934,11 @@ begin
       begin
         NodeData := TreeFileList.GetNodeData(Node);
         if NodeData.FileName <> '' then
-          ImageIndex := 14
+          ImageIndex := 17
         else if TreeFileList.Expanded[Node] then
-          ImageIndex := 13
+          ImageIndex := 16
         else
-          ImageIndex := 12;
+          ImageIndex := 15;
       end;
     end;
 end;

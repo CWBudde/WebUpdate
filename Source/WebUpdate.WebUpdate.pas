@@ -3,8 +3,7 @@ unit WebUpdate.WebUpdate;
 interface
 
 uses
-  System.SysUtils, WebUpdate.Channels.JSON,
-  WebUpdate.Channel.JSON;
+  System.SysUtils, WebUpdate.JSON.Channels, WebUpdate.JSON.Channel;
 
 type
   TWebUpdate = class

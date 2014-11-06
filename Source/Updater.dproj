@@ -82,8 +82,8 @@
 			<DelphiCompile Include="$(MainSource)">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="WebUpdate.Channel.JSON.pas"/>
-			<DCCReference Include="WebUpdate.Channels.JSON.pas"/>
+			<DCCReference Include="WebUpdate.JSON.Channel.pas"/>
+			<DCCReference Include="WebUpdate.JSON.Channels.pas"/>
 			<DCCReference Include="WebUpdate.Updater.pas">
 				<Form>FormWebUpdate</Form>
 				<FormType>dfm</FormType>
