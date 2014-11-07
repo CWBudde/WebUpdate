@@ -2,7 +2,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
   Left = 0
   Top = 0
   Caption = 'Web Update Tool'
-  ClientHeight = 461
+  ClientHeight = 382
   ClientWidth = 528
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -29,7 +29,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
   end
   object StatusBar: TStatusBar
     Left = 0
-    Top = 442
+    Top = 363
     Width = 528
     Height = 19
     Panels = <
@@ -41,7 +41,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
     Left = 0
     Top = 131
     Width = 528
-    Height = 311
+    Height = 232
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 1
@@ -49,7 +49,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
       Left = 0
       Top = 0
       Width = 528
-      Height = 311
+      Height = 232
       Align = alClient
       Header.AutoSizeIndex = 0
       Header.Font.Charset = DEFAULT_CHARSET
@@ -1083,7 +1083,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
       000000000000}
   end
   object CheckForUpdateTimer: TTimer
-    Interval = 3000
+    Enabled = False
     OnTimer = CheckForUpdateTimerTimer
     Left = 320
     Top = 72

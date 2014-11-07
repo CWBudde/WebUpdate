@@ -20,7 +20,6 @@ begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TFormWebUpdateTool, FormWebUpdateTool);
-  if not Application.Terminated then
-    Application.Run;
+  Application.Run;
 end.
 

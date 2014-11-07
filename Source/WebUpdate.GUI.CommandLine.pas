@@ -10,10 +10,6 @@ type
   TFormCommandLine = class(TForm)
     MemoCommandLine: TMemo;
     procedure FormCreate(Sender: TObject);
-  private
-    { Private-Deklarationen }
-  public
-    { Public-Deklarationen }
   end;
 
 implementation
@@ -26,6 +22,8 @@ uses
 procedure TFormCommandLine.FormCreate(Sender: TObject);
 begin
   MemoCommandLine.Lines[3] := Format(MemoCommandLine.Lines[3],
+    [ExtractFileName(ParamStr(0))]);
+  MemoCommandLine.Lines[26] := Format(MemoCommandLine.Lines[26],
     [ExtractFileName(ParamStr(0))]);
   MemoCommandLine.CaretPos := Point(0, MemoCommandLine.Lines.Count);
 end;

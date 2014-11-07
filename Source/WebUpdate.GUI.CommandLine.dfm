@@ -3,7 +3,7 @@ object FormCommandLine: TFormCommandLine
   Top = 0
   BorderStyle = bsDialog
   Caption = 'Command-line switches'
-  ClientHeight = 310
+  ClientHeight = 353
   ClientWidth = 624
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -20,7 +20,7 @@ object FormCommandLine: TFormCommandLine
     Left = 0
     Top = 0
     Width = 624
-    Height = 310
+    Height = 353
     Align = alClient
     Color = clBlack
     Font.Charset = DEFAULT_CHARSET
@@ -39,26 +39,31 @@ object FormCommandLine: TFormCommandLine
       'Commands:'
       '---------'
       ''
-      '  Snapshot                     (take snapshot)'
-      '  Copy                         (copy to path)'
-      '  Upload                       (upload to server)'
+      '  s or S or Snapshot           (take snapshot)'
+      '  c or C or Copy               (copy to path)'
+      '  u or U or Upload             (upload to server)'
       ''
       'Options:'
       '---------'
       ''
       
-        '  -Channel:"channel name"      (with/without quotes, default: "N' +
+        '  -Channel="channel name"      (with/without quotes, default: "N' +
         'ightly")'
       
-        '  -FtpHost:host                (FTP host name, overrides project' +
+        '  -FtpHost=host                (FTP host name, overrides project' +
         #39's default)'
       
-        '  -FtpUser:username            (FTP user name, overrides project' +
+        '  -FtpUser=username            (FTP user name, overrides project' +
         #39's default)'
       
-        '  -FtpPassword:password        (FTP password, overrides project'#39 +
+        '  -FtpPassword=password        (FTP password, overrides project'#39 +
         's default)'
-      '  -CopyPath:path               (Path of snapshot copies)')
+      '  -CopyPath=path               (Path of snapshot copies)'
+      ''
+      'Example:'
+      '--------'
+      ''
+      '  %s project.wup scu -Channel=Beta')
     ParentFont = False
     ReadOnly = True
     TabOrder = 0

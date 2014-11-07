@@ -113,7 +113,7 @@ implementation
 {$R *.dfm}
 
 uses
-  dwsUtils, ShellAPI, WebUpdate.MD5;
+  System.StrUtils, WinAPI.ShellAPI, dwsUtils, WebUpdate.MD5;
 
 resourcestring
   RStrBaseURL = 'http://www.savioursofsoul.de/Christian/WebUpdate/';
@@ -352,49 +352,50 @@ end;
 
 function TFormWebUpdate.CheckMainApplication: Boolean;
 var
-   ProcessHandle: THandle;
-   WinHwnd: HWND;
-   ProcessID, ExitCode: Integer;
+  ProcessHandle: THandle;
+  WinHwnd: HWND;
+  ProcessID, ExitCode: Integer;
 begin
-   // check whether to perform check this at all?
-   if FMainAppCaption = '' then
-     Exit(False);
+  // check whether to perform check this at all?
+  if FMainAppCaption = '' then
+    Exit(False);
 
-   repeat
-     // check for opened main application
-     WinHwnd := FindWindow(nil, PWideChar(FMainAppCaption));
-     if not (IsWindow(WinHwnd)) then
+  repeat
+    // check for opened main application
+    WinHwnd := FindWindow(nil, PWideChar(FMainAppCaption));
+    if not (IsWindow(WinHwnd)) then
+      Exit(False);
+
+    // show dialog
+    case MessageDlg('Main application is already running!' + #13#10#13#10 +
+      'Force closing the main application?', mtWarning, [mbYes, mbAbort,
+      mbRetry, mbIgnore], 0) of
+      mrYes:
+        Break;
+      mrAbort:
+        Exit(True);
+      mrIgnore:
         Exit(False);
+    end;
+  until False;
 
-     // show dialog
-     case MessageDlg('Main application is already running!' + #13#10#13#10 +
-       'Force closing the main application?', mtWarning, [mbYes, mbAbort,
-       mbRetry, mbIgnore], 0) of
-       mrYes:
-         Break;
-       mrAbort:
-         Exit(True);
-       mrIgnore:
-         Exit(False);
-     end;
-   until False;
+  // get process ID
+  ProcessID := 0;
+  GetWindowThreadProcessID(WinHwnd, @ProcessID);
 
-   // get process ID
-   ProcessID := 0;
-   GetWindowThreadProcessID(WinHwnd, @ProcessID);
+  // get process handle
+  ProcessHandle := OpenProcess(PROCESS_CREATE_THREAD or PROCESS_VM_OPERATION
+    or PROCESS_VM_WRITE or PROCESS_VM_READ or PROCESS_TERMINATE, False, ProcessID);
 
-   // get process handle
-   ProcessHandle := OpenProcess(PROCESS_CREATE_THREAD or PROCESS_VM_OPERATION
-      or PROCESS_VM_WRITE or PROCESS_VM_READ or PROCESS_TERMINATE, False, ProcessID);
-
-   // eventually close process
-   if (ProcessHandle > 0) then
-   begin
-      ExitCode := 0;
-      GetExitCodeProcess(ProcessHandle, DWORD(ExitCode));
-      TerminateProcess(ProcessHandle, ExitCode);
-      CloseHandle(ProcessHandle);
-   end;
+  // eventually close process
+  if (ProcessHandle > 0) then
+  begin
+    ExitCode := 0;
+    GetExitCodeProcess(ProcessHandle, DWORD(ExitCode));
+    TerminateProcess(ProcessHandle, ExitCode);
+    CloseHandle(ProcessHandle);
+  end;
+  Result := False;
 end;
 
 procedure TFormWebUpdate.FileChangedEventHandler(Sender: TObject;
@@ -453,18 +454,77 @@ end;
 procedure TFormWebUpdate.ScanParameters;
 var
   Index: Integer;
+  Text: string;
+  BaseURL: string;
+  BaseFile: TFileName;
+  LocalFile: TFileName;
+  EqPos: Integer;
+  ChannelName: string;
+  Item: TWebUpdateChannelItem;
 begin
+  BaseURL := RStrBaseURL;
+  BaseFile := RStrBaseFile;
+  LocalFile := 'WebUpdate.json';
+
+  (*
+    -u=URI
+    -c=Channel
+    -f=FileName (Channel)
+  *)
+
   for Index := 1 to ParamCount do
   begin
+    Text := ParamStr(Index);
+    if Text[1] = '-' then
+    begin
+      // remove options identifier and get colon pos
+      Delete(Text, 1, 1);
+      EqPos := Pos('=', Text);
 
+      if StartsText('u=', Text) then
+        BaseURL := Copy(Text, EqPos, Length(Text) - EqPos)
+      else if StartsText('f=', Text) then
+        BaseFile := Copy(Text, EqPos, Length(Text) - EqPos)
+      else if StartsText('c=', Text) then
+        ChannelName := Copy(Text, EqPos, Length(Text) - EqPos)
+      else
+      begin
+        MessageDlg(Format('Unknown option: %s!', [Text]), mtError, [mbOK], 0);
+        Exit;
+      end;
+    end
+    else
+      MessageDlg(Format('Unknown command: %s', [Text]), mtError, [mbOK], 0);
   end;
 
-  LoadChannelsFromURI(RStrBaseURL + RStrBaseFile);
+  // load channels setup from URI
+  LoadChannelsFromURI(BaseURL + BaseFile);
 
-  if FileExists(FLocalBasePath + 'WebUpdate.json') then
+  // eventually load existing setup
+  if FileExists(FLocalBasePath + LocalFile) then
   begin
     FCurrentSetup := TWebUpdateChannelSetup.Create;
-    FCurrentSetup.LoadFromFile(FLocalBasePath + 'WebUpdate.json');
+    FCurrentSetup.LoadFromFile(FLocalBasePath + LocalFile);
+  end;
+
+  if ChannelName <> '' then
+  begin
+    FChannelBasePath := BaseURL + ChannelName + '/';
+
+    for Item in FChannels.Items do
+      if UnicodeSameText(Item.Name, ChannelName) then
+      begin
+        LoadSetupFromURI(FChannelBasePath + Item.FileName);
+        Break;
+      end;
+
+    PerformWebUpdate;
+
+    // switch pages to progress tab
+    PageControl.ActivePage := TabProgress;
+    Update;
+
+    Exit;
   end;
 end;
 

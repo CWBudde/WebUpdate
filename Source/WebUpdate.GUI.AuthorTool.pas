@@ -151,7 +151,7 @@ type
     FWebUpdate: TWebUpdate;
     FProjectModified: Boolean;
 
-    procedure ScanParameters;
+    function ScanParameters: Boolean;
 
     procedure ClearStatus;
     procedure WriteStatus(Text: string);
@@ -163,6 +163,7 @@ type
     procedure CollectFileProgressEventHandler(const Directory: string; var SkipScan: Boolean);
 
     procedure WorkEventHandler(ASender: TObject; AWorkMode: TWorkMode; AWorkCount: Int64);
+    procedure SetCurrentChannel(const Value: string);
   protected
     procedure SetupDefaultChannels;
     procedure LoadChannels;
@@ -174,6 +175,7 @@ type
     procedure CopySnapshot;
 
     property Project: TWebUpdateProject read FProject;
+    property CurrentChannel: string read FCurrentChannel write SetCurrentChannel;
   end;
 
 var
@@ -245,25 +247,8 @@ begin
   // create project
   FProject := TWebUpdateProject.Create;
 
-  // eventually load or setup project
-  if FileExists(FPreferences.RecentProject) then
-    FProject.LoadFromFile(FPreferences.RecentProject)
-  else
-  begin
-    // set default values
-    FProject.BaseDirectory := ExtractFileDir(ParamStr(0));
-    FProject.ChannelsFilename := 'WebUpdate\Channels.json';
-  end;
-
-  // create & setup channels
+  // create channels
   FChannels := TWebUpdateChannels.Create;
-  SetupDefaultChannels;
-
-  // create & setup self update
-  FWebUpdate := TWebUpdate.Create;
-  FWebUpdate.GetCurrentChannelInformation;
-
-  ScanParameters;
 end;
 
 procedure TFormWebUpdateTool.FormDestroy(Sender: TObject);
@@ -279,11 +264,33 @@ begin
   Left := FPreferences.Left;
   Top := FPreferences.Top;
 
+  // eventually load or setup project
+  if FileExists(FPreferences.RecentProject) then
+    FProject.LoadFromFile(FPreferences.RecentProject)
+  else
+  begin
+    // set default values
+    FProject.BaseDirectory := ExtractFileDir(ParamStr(0));
+    FProject.ChannelsFilename := 'WebUpdate\Channels.json';
+  end;
+
+  // load/setup channels
+  if FileExists(Project.FullChannelsFilename) then
+    LoadChannels
+  else
+    SetupDefaultChannels;
+
+  if ScanParameters then
+    Exit;
+
   ActionCopyUpload.Visible := not Project.AutoCopyUpload;
   ActionViewChannel.Checked := FPreferences.ViewFiles;
   ActionViewChannelExecute(Sender);
 
-  LoadChannels;
+  // create & setup self update
+  FWebUpdate := TWebUpdate.Create;
+  FWebUpdate.GetCurrentChannelInformation;
+  CheckForUpdateTimer.Enabled := True;
 end;
 
 procedure TFormWebUpdateTool.FormClose(Sender: TObject;
@@ -306,8 +313,17 @@ end;
 function TFormWebUpdateTool.GetCurrentChannelNodeData: PChannelItem;
 var
   Node: PVirtualNode;
+  NodeData: PChannelItem;
 begin
   Result := nil;
+
+  // get FCurrentChannel node
+  for Node in TreeChannels.Nodes do
+  begin
+    NodeData := TreeChannels.GetNodeData(Node);
+    if SameText(NodeData^.Name, FCurrentChannel) then
+      Exit(TreeChannels.GetNodeData(Node));
+  end;
 
   // get currently checked node
   for Node in TreeChannels.CheckedNodes do
@@ -603,49 +619,138 @@ begin
   ClearStatus;
 end;
 
-procedure TFormWebUpdateTool.ScanParameters;
+function TFormWebUpdateTool.ScanParameters: Boolean;
+type
+  TWebUpdateCommand = (wuSnapshot, wuUpload, wuCopy);
+  TWebUpdateCommands = set of TWebUpdateCommand;
 var
-  ParamIndex: Integer;
+  ParamIndex, CharIndex: Integer;
+  Commands: TWebUpdateCommands;
+  Text: string;
+  EqPos: Integer;
 begin
-  for ParamIndex := 1 to ParamCount do
+  Result := False;
+
+  // check for parameters
+  if ParamCount = 0 then
+    Exit;
+
+  // check if project file exists
+  if not FileExists(ParamStr(1)) then
   begin
-//    StartsText('-Channel:')
-//    ShowMessage(ParamStr(ParamIndex));
+    MessageDlg(Format('File %s does not exist!', [ParamStr(1)]), mtError,
+      [mbOK], 0);
+    Exit;
   end;
+
+  // now load project
+  FProject.LoadFromFile(ParamStr(1));
+
+  // check whether a command is specified
+  if ParamCount = 1 then
+  begin
+    MessageDlg('No command specified!', mtError, [mbOK], 0);
+    Exit;
+  end;
+
+  Commands := [];
+  for ParamIndex := 2 to ParamCount do
+  begin
+    Text := ParamStr(ParamIndex);
+    if Text[1] = '-' then
+    begin
+      // remove options identifier and get colon pos
+      Delete(Text, 1, 1);
+      EqPos := Pos('=', Text);
+
+      if StartsText('Channel:', Text) then
+        CurrentChannel := Copy(Text, EqPos, Length(Text) - EqPos)
+      else if StartsText('FtpHost:', Text) then
+        Project.FTP.Server := Copy(Text, EqPos, Length(Text) - EqPos)
+      else if StartsText('FtpUser:', Text) then
+        Project.FTP.Username := Copy(Text, EqPos, Length(Text) - EqPos)
+      else if StartsText('FtpPassword:', Text) then
+        Project.FTP.Password := Copy(Text, EqPos, Length(Text) - EqPos)
+      else if StartsText('CopyPath:', Text) then
+        Project.Copy.Path := Copy(Text, EqPos, Length(Text) - EqPos)
+      else
+      begin
+        MessageDlg(Format('Unknown option: %s!', [Text]), mtError, [mbOK], 0);
+        Exit;
+      end;
+    end
+    else
+    begin
+      if UnicodeSameText(Text, 'Snapshot') then
+        Commands := Commands + [wuSnapshot]
+      else if UnicodeSameText(Text, 'Copy') then
+        Commands := Commands + [wuCopy]
+      else if UnicodeSameText(Text, 'Upload') then
+        Commands := Commands + [wuUpload]
+      else
+        for CharIndex := 1 to Length(Text) do
+          case Text[CharIndex] of
+            's', 'S':
+              Commands := Commands + [wuSnapshot];
+            'c', 'C':
+              Commands := Commands + [wuCopy];
+            'u', 'U':
+              Commands := Commands + [wuUpload];
+            else
+              begin
+                MessageDlg(Format('Unknown command %s', [Text[CharIndex]]),
+                  mtError, [mbOK], 0);
+                Exit;
+              end;
+          end;
+    end;
+  end;
+
+  // run minimized
+  WindowState := wsMinimized;
+  Result := True;
+
+  if wuSnapshot in Commands then
+    TakeSnapshot;
+  if wuCopy in Commands then
+    CopySnapshot;
+  if wuUpload in Commands then
+    UploadSnapshot;
+
+  Application.Terminate;
 end;
 
 procedure TFormWebUpdateTool.LoadChannels;
 var
   Node: PVirtualNode;
   NodeData: PChannelItem;
-  ChannelFileName: TFileName;
   ChannelItem: TWebUpdateChannelItem;
 begin
-  // get channel file name and check for existence
-  ChannelFileName := Project.FullChannelsFilename;
-  if not FileExists(ChannelFileName) then
-    Exit;
-
-  // now load channels from file
-  FChannels.LoadFromFile(ChannelFileName);
+  // load channels from file
+  FChannels.LoadFromFile(Project.FullChannelsFilename);
 
   // clear channel tree
   TreeChannels.Clear;
 
-  // enumerate channel item
-  for ChannelItem in FChannels.Items do
-  begin
-    Node := TreeChannels.AddChild(TreeChannels.RootNode);
-    Node.CheckType := ctRadioButton;
-    NodeData := TreeChannels.GetNodeData(Node);
+  TreeChannels.BeginUpdate;
+  try
+    // enumerate channel item
+    for ChannelItem in FChannels.Items do
+    begin
+      Node := TreeChannels.AddChild(TreeChannels.RootNode);
+      Node.CheckType := ctRadioButton;
+      NodeData := TreeChannels.GetNodeData(Node);
 
-    NodeData^.Name := ChannelItem.Name;
-    NodeData^.FileName := ChannelItem.FileName;
-    NodeData^.Modified := ChannelItem.Modified;
+      NodeData^.Name := ChannelItem.Name;
+      NodeData^.FileName := ChannelItem.FileName;
+      NodeData^.Modified := ChannelItem.Modified;
 
-    // update check state
-    if SameText(ChannelItem.Name, FProject.CurrentChannel) then
-      TreeChannels.CheckState[Node] := csCheckedNormal;
+      // update check state
+      if SameText(ChannelItem.Name, FProject.CurrentChannel) then
+        TreeChannels.CheckState[Node] := csCheckedNormal;
+    end;
+  finally
+    TreeChannels.EndUpdate;
   end;
 end;
 
@@ -679,6 +784,27 @@ begin
     TreeChannels.EndUpdate;
   end;
   FChannels.SaveToFile(FormWebUpdateTool.Project.FullChannelsFilename);
+end;
+
+procedure TFormWebUpdateTool.SetCurrentChannel(const Value: string);
+var
+  Node: PVirtualNode;
+  NodeData: PChannelItem;
+begin
+  if FCurrentChannel <> Value then
+  begin
+    // check node with name
+    for Node in TreeChannels.Nodes do
+    begin
+      NodeData := TreeChannels.GetNodeData(Node);
+      if SameText(NodeData^.Name, Value) then
+        TreeChannels.CheckState[Node] := csCheckedNormal
+      else
+        TreeChannels.CheckState[Node] := csUncheckedNormal;
+    end;
+
+    FCurrentChannel := Value;
+  end;
 end;
 
 procedure TFormWebUpdateTool.SetupDefaultChannels;
