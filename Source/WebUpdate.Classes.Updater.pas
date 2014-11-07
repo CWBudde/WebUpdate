@@ -15,26 +15,32 @@ type
     TFileAction = (faAdd, faChange, faDelete);
   private
     FFileName: TFileName;
+    FLocalFileName: TFileName;
     FMD5Hash: Integer;
     FAction: TFileAction;
+    FModified: TDateTime;
+    procedure SetFileName(const Value: TFileName);
+  protected
+    procedure UpdateLocalFileName;
   public
-    constructor Create(const FileName: TFileName; MD5Hash: Integer);
+    constructor Create(const FileName: TFileName; MD5Hash: Integer); overload;
+    constructor Create(const FileName: TFileName); overload;
 
-    property FileName: TFileName read FFileName write FFileName;
+    property FileName: TFileName read FFileName write SetFileName;
+    property LocalFileName: TFileName read FLocalFileName;
     property MD5Hash: Integer read FMD5Hash write FMD5Hash;
     property Action: TFileAction read FAction write FAction;
+    property Modified: TDateTime read FModified write FModified;
   end;
   TFileItemList = TList<TFileItem>;
 
   TUpdaterThread = class(TThread)
   type
     TProgressEvent = procedure (Sender: TObject; Progress: Integer; ByteCount: Integer) of object;
-    TFileChangedEvent = procedure (Sender: TObject; const FileName: TFileName) of object;
+    TFileNameProgressEvent = procedure (Sender: TObject; const FileName: TFileName) of object;
     TMD5MismatchEvent = procedure (Sender: TObject; const FileName: TFileName; var Ignore: Boolean) of object;
     TScriptErrorsEvent = procedure (Sender: TObject; const MessageList: TdwsMessageList) of object;
   private
-    FFilesToAdd: TWebUpdateFileItems;
-    FFilesToDelete: TWebUpdateFileItems;
     FFiles: TFileItemList;
     FHttp: TIdHttp;
     FLocalPath: string;
@@ -42,7 +48,7 @@ type
     FPostScript: string;
     FPreScript: string;
     FLastWorkCount: Integer;
-    FOnFileChanged: TFileChangedEvent;
+    FOnFileNameProgress: TFileNameProgressEvent;
     FOnProgress: TProgressEvent;
     FOnDone: TNotifyEvent;
     FOnScriptErrors: TScriptErrorsEvent;
@@ -55,8 +61,7 @@ type
     constructor Create; reintroduce;
     destructor Destroy; override;
 
-    property FilesToAdd: TWebUpdateFileItems read FFilesToAdd;
-    property FilesToDelete: TWebUpdateFileItems read FFilesToDelete;
+    property Files: TFileItemList read FFiles;
     property BasePath: string read FBasePath write FBasePath;
     property LocalPath: string read FLocalPath write FLocalPath;
 
@@ -64,7 +69,7 @@ type
     property PostScript: string read FPostScript write FPostScript;
 
     property OnProgress: TProgressEvent read FOnProgress write FOnProgress;
-    property OnFileChanged: TFileChangedEvent read FOnFileChanged write FOnFileChanged;
+    property OnFileNameProgress: TFileNameProgressEvent read FOnFileNameProgress write FOnFileNameProgress;
     property OnDone: TNotifyEvent read FOnDone write FOnDone;
     property OnMD5Mismatch: TMD5MismatchEvent read FOnMD5Mismatch write FOnMD5Mismatch;
     property OnScriptErrors: TScriptErrorsEvent read FOnScriptErrors write FOnScriptErrors;
@@ -81,7 +86,7 @@ type
     FNewSetup: TWebUpdateChannelSetup;
     FThread: TUpdaterThread;
 
-    FOnFileChanged: TUpdaterThread.TFileChangedEvent;
+    FOnFileNameProgress: TUpdaterThread.TFileNameProgressEvent;
     FOnScriptErrors: TUpdaterThread.TScriptErrorsEvent;
     FOnDone: TNotifyEvent;
     FOnMD5Mismatch: TUpdaterThread.TMD5MismatchEvent;
@@ -114,7 +119,7 @@ type
     property MainAppFileName: TFileName read GetMainAppFileName;
 
     property OnProgress: TUpdaterThread.TProgressEvent read FOnProgress write FOnProgress;
-    property OnFileChanged: TUpdaterThread.TFileChangedEvent read FOnFileChanged write FOnFileChanged;
+    property OnFileNameProgress: TUpdaterThread.TFileNameProgressEvent read FOnFileNameProgress write FOnFileNameProgress;
     property OnDone: TNotifyEvent read FOnDone write FOnDone;
     property OnScriptErrors: TUpdaterThread.TScriptErrorsEvent read FOnScriptErrors write FOnScriptErrors;
     property OnMD5Mismatch: TUpdaterThread.TMD5MismatchEvent read FOnMD5Mismatch write FOnMD5Mismatch;
@@ -137,6 +142,29 @@ begin
   FFileName := FileName;
   FMD5Hash := MD5Hash;
   FAction := faAdd;
+  UpdateLocalFileName;
+end;
+
+constructor TFileItem.Create(const FileName: TFileName);
+begin
+  FFileName := FileName;
+  UpdateLocalFileName;
+  FMD5Hash := 0;
+  FAction := faDelete;
+end;
+
+procedure TFileItem.SetFileName(const Value: TFileName);
+begin
+  if FFileName <> Value then
+  begin
+    FFileName := Value;
+    UpdateLocalFileName;
+  end;
+end;
+
+procedure TFileItem.UpdateLocalFileName;
+begin
+  FLocalFileName := StringReplace(FFileName, '/', '\', [rfReplaceAll]);
 end;
 
 
@@ -144,10 +172,7 @@ end;
 
 constructor TUpdaterThread.Create;
 begin
-  FFilesToAdd := TWebUpdateFileItems.Create;
-  FFilesToDelete := TWebUpdateFileItems.Create;
-
-//  FFiles := TFileItemList.Create;
+  FFiles := TFileItemList.Create;
 
   FPreScript := '';
   FPostScript := '';
@@ -158,9 +183,6 @@ end;
 
 destructor TUpdaterThread.Destroy;
 begin
-  FFilesToAdd.Free;
-  FFilesToDelete.Free;
-
   FFiles.Free;
   inherited;
 end;
@@ -217,7 +239,7 @@ end;
 procedure TUpdaterThread.Execute;
 var
   MS: TMemoryStream;
-  Item: TWebUpdateFileItem;
+  Item: TFileItem;
   Hash: Integer;
   IgnoreMD5Error: Boolean;
 begin
@@ -230,14 +252,21 @@ begin
     FHttp.OnWork := HttpWork;
     MS := TMemoryStream.Create;
     try
-      for Item in FFilesToAdd do
+      for Item in FFiles do
       begin
         // eventually call 'file changed' event
-        if Assigned(FOnFileChanged) then
+        if Assigned(FOnFileNameProgress) then
           Synchronize(procedure
           begin
-            FOnFileChanged(Self, Item.FileName);
+            FOnFileNameProgress(Self, Item.FileName);
           end);
+
+        // eventually delete file and continue with next file
+        if Item.Action = faDelete then
+        begin
+          DeleteFile(FLocalPath + Item.LocalFileName);
+          Continue;
+        end;
 
         // clear buffer / reset last work count
         MS.Clear;
@@ -269,7 +298,11 @@ begin
         end;
 
         // save downloaded file
-        MS.SaveToFile(FLocalPath + StringReplace(Item.FileName, '/', '\', [rfReplaceAll]));
+        MS.SaveToFile(FLocalPath + Item.LocalFileName);
+
+        // eventually update modification date/time
+        if Item.Modified > 0 then
+          FileSetDate(FLocalPath + Item.LocalFileName, DateTimeToFileDate(Item.Modified));
 
         // check if terminated
         if Terminated then
@@ -293,10 +326,6 @@ begin
   // check if terminated
   if Terminated then
     Exit;
-
-  // now delete files no longer needed
-  for Item in FFilesToDelete do
-    DeleteFile(FLocalPath + StringReplace(Item.FileName, '/', '\', [rfReplaceAll]));
 
   // check if terminated
   if Terminated then
@@ -361,8 +390,8 @@ end;
 procedure TWebUpdater.FileChangedEventHandler(Sender: TObject;
   const FileName: TFileName);
 begin
-  if Assigned(OnFileChanged) then
-    OnFileChanged(Sender, FileName);
+  if Assigned(OnFileNameProgress) then
+    OnFileNameProgress(Sender, FileName);
 end;
 
 procedure TWebUpdater.ScriptErrorsEventHandler(Sender: TObject;
@@ -403,14 +432,19 @@ var
   TotalBytes: Integer;
 
   procedure AddFileItem(Item: TWebUpdateFileItem);
+  var
+    FileItem: TFileItem;
   begin
-    FThread.FilesToAdd.Add(Item);
+    FileItem := TFileItem.Create(Item.FileName, Item.MD5Hash);
+    FileItem.Modified := Item.Modified;
+    FThread.Files.Add(FileItem);
     TotalBytes := TotalBytes + Item.FileSize;
   end;
 
 var
   ChannelItem: TWebUpdateChannelItem;
   Item, CurrentItem: TWebUpdateFileItem;
+  FileItem: TFileItem;
   LocalSetup: TWebUpdateChannelSetup;
   ItemFlag: Boolean;
 begin
@@ -461,16 +495,22 @@ begin
         ItemFlag := True;
 
         // check if file is among the add list
-        for Item in FThread.FilesToAdd do
-          if UnicodeSameText(CurrentItem.FileName, Item.FileName) then
+        for FileItem in FThread.Files do
+          if UnicodeSameText(CurrentItem.FileName, FileItem.FileName) then
           begin
             ItemFlag := False;
             Break;
-          end;
+          end
+          else
+            FileItem.Action := faChange;
 
         // add file to delete list
         if ItemFlag then
-          FThread.FilesToDelete.Add(CurrentItem);
+        begin
+          FileItem := TFileItem.Create(CurrentItem.FileName);
+          FileItem.Action := faDelete;
+          FThread.Files.Add(FileItem);
+        end;
       end;
     finally
       LocalSetup.Free;
@@ -489,7 +529,7 @@ begin
 
   // specify event handlers
   FThread.OnProgress := ProgressEventHandler;
-  FThread.OnFileChanged := FileChangedEventHandler;
+  FThread.OnFileNameProgress := FileChangedEventHandler;
   FThread.OnDone := DoneEventHandler;
   FThread.OnScriptErrors := ScriptErrorsEventHandler;
   FThread.OnMD5Mismatch := MD5MismatchHandler;

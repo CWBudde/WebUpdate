@@ -44,7 +44,7 @@ type
     FMainAppCaption: string;
 
     procedure ProgressEventHandler(Sender: TObject; Progress: Integer; ByteCount: Integer);
-    procedure FileChangedEventHandler(Sender: TObject; const FileName: TFileName);
+    procedure FileNameProgressEventHandler(Sender: TObject; const FileName: TFileName);
     procedure DoneEventHandler(Sender: TObject);
     procedure MD5MismatchHandler(Sender: TObject; const FileName: TFileName; var Ignore: Boolean);
   public
@@ -81,7 +81,7 @@ begin
   // create WebUpdater
   FWebUpdater := TWebUpdater.Create;
   FWebUpdater.OnProgress := ProgressEventHandler;
-  FWebUpdater.OnFileChanged := FileChangedEventHandler;
+  FWebUpdater.OnFileNameProgress := FileNameProgressEventHandler;
   FWebUpdater.OnDone := DoneEventHandler;
   FWebUpdater.OnMD5Mismatch := MD5MismatchHandler;
 
@@ -134,7 +134,7 @@ begin
   Update;
 end;
 
-procedure TFormWebUpdate.FileChangedEventHandler(Sender: TObject;
+procedure TFormWebUpdate.FileNameProgressEventHandler(Sender: TObject;
   const FileName: TFileName);
 begin
   LabelCurrentFile.Caption := 'Current File: ' + FileName;
