@@ -8,9 +8,61 @@ The tool was created after thinking about how a modern, lightweight web update t
 In order to use this tool in your project there are a few prerequisites. First the source code is licensed under a dual license of MPL or LGPL, which means you can use this either under the conditions of MPL or under the conditions of LGPL. Both have advantages and disadvantages, however the essence of these libraries is that you mention the use of this library and to allow integration of changes to the original project. If you need to license this under a different license, feel free to contact me.
 
 Beyond the license, there are at least 4 dependencies to other libraries namely:
-* DWS
-* Virtual Treeview
-* JEDI
-* Indy
+* [DWS](http://www.delphitools.info/dwscript/)
+* [Virtual Treeview](http://www.jam-software.com/virtual-treeview/)
+* [JEDI](http://www.delphi-jedi.org/)
+* [Indy](http://www.indyproject.org/)
 
 Please make sure you have these libraries accessible from your Delphi environment. So far all modern Delphi XE versions are supported. Older versions might work as well, but probably need some refactoring in order to run out of the box.
+
+Command-line switches (Authoring tool)
+--------------------------------------
+
+In case you want to automate the authoring tool, you can use the following command-line switches. In fact the tool will still be a GUI-tool, but with a hidden user interface, so don't expect any output of the tool. Following, all commands and options are listed: 
+
+    Syntax: WebUpdateTool.exe project.wup command [more commands] [-options]
+    
+      project.wup must be replaced by your project name
+    
+    Commands:
+    ---------
+    
+      s or S or Snapshot           (take snapshot)
+      c or C or Copy               (copy to path)
+      u or U or Upload             (upload to server)
+    
+    Options:
+    ---------
+    
+      -Channel="channel name"      (with/without quotes, default: "Nightly")
+      -FtpHost=host                (FTP host name, overrides project's default)
+      -FtpUser=username            (FTP user name, overrides project's default)
+      -FtpPassword=password        (FTP password, overrides project's default)
+      -CopyPath=path               (Path of snapshot copies)
+    
+    Example:
+    --------
+    
+      WebUpdateTool.exe project.wup scu -Channel=Beta
+
+
+Command-line switches (Updater)
+-------------------------------
+
+While the 'Updater' tool can be started as stand-alone tool, it is supposed to work as a helper for a main application. It is required because a running application can't replace itself.
+
+    Syntax: Updater.exe [-options]
+    
+    Options:
+    ---------
+    
+      -u=URL                       (Base URL for JSON files)
+      -c=Channel                   (Update Channel, default is 'Stable')
+      -f=FileName (Channel)        (Filename of channels definition file)
+
+    Example:
+    --------
+    
+      Updater.exe -c=Nightly
+
+    

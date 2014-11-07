@@ -41,28 +41,29 @@ implementation
 uses
   WinApi.ShellApi;
 
+procedure OpenLink(const URL: string);
+begin
+  ShellExecute(0, 'open', PChar(URL), nil, nil, SW_SHOWDEFAULT)
+end;
+
 procedure TFormAbout.LabelDWSClick(Sender: TObject);
 begin
-  ShellExecuteW(0, 'open', PChar('http://www.delphitools.info/dwscript/'), nil,
-    nil, SW_SHOWDEFAULT)
+  OpenLink('http://www.delphitools.info/dwscript/');
 end;
 
 procedure TFormAbout.LabelIndyClick(Sender: TObject);
 begin
-  ShellExecuteW(0, 'open', PChar('http://www.indyproject.org/'), nil, nil,
-    SW_SHOWDEFAULT)
+  OpenLink('http://www.indyproject.org/');
 end;
 
 procedure TFormAbout.LabelJEDIClick(Sender: TObject);
 begin
-  ShellExecuteW(0, 'open', PChar('http://www.delphi-jedi.org/'), nil, nil,
-    SW_SHOWDEFAULT)
+  OpenLink('http://www.delphi-jedi.org/');
 end;
 
 procedure TFormAbout.LabelVirtualTreeviewClick(Sender: TObject);
 begin
-  ShellExecuteW(0, 'open', PChar('http://www.jam-software.com/virtual-treeview/'),
-    nil, nil, SW_SHOWDEFAULT)
+  OpenLink('http://www.jam-software.com/virtual-treeview/');
 end;
 
 procedure TFormAbout.RadioButtonLicenseLGPLClick(Sender: TObject);
@@ -76,4 +77,3 @@ begin
 end;
 
 end.
-

@@ -11,7 +11,6 @@ object FormWebUpdate: TFormWebUpdate
   Font.Name = 'Segoe UI'
   Font.Style = []
   OldCreateOrder = False
-  OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   PixelsPerInch = 96
@@ -21,7 +20,7 @@ object FormWebUpdate: TFormWebUpdate
     Top = 47
     Width = 393
     Height = 175
-    ActivePage = TabProgress
+    ActivePage = TabSelectChannel
     Align = alClient
     Style = tsFlatButtons
     TabOrder = 0
