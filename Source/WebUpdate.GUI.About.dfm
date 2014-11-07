@@ -4,7 +4,7 @@ object FormAbout: TFormAbout
   BorderStyle = bsDialog
   Caption = 'About'
   ClientHeight = 393
-  ClientWidth = 517
+  ClientWidth = 539
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -14,7 +14,7 @@ object FormAbout: TFormAbout
   OldCreateOrder = False
   Position = poMainFormCenter
   DesignSize = (
-    517
+    539
     393)
   PixelsPerInch = 96
   TextHeight = 13
@@ -25,23 +25,130 @@ object FormAbout: TFormAbout
     Height = 13
     Caption = 'Dual Licenses'
   end
-  object Label1: TLabel
+  object LabelCopyright: TLabel
     Left = 8
     Top = 79
-    Width = 442
-    Height = 19
-    Caption = 'Written for Delphi XE+. Uses the DWS, JEDI and Indy projects'
+    Width = 214
+    Height = 18
+    Caption = 'Written for Delphi XE+. Uses the'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
-    Font.Height = -16
+    Font.Height = -15
     Font.Name = 'Tahoma'
     Font.Style = []
+    Font.Quality = fqNonAntialiased
+    ParentFont = False
+  end
+  object LabelDWS: TLabel
+    Left = 227
+    Top = 79
+    Width = 32
+    Height = 18
+    Cursor = crHandPoint
+    Caption = 'DWS'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clBlue
+    Font.Height = -15
+    Font.Name = 'Tahoma'
+    Font.Style = [fsUnderline]
+    Font.Quality = fqNonAntialiased
+    ParentFont = False
+    OnClick = LabelDWSClick
+  end
+  object LabelJEDI: TLabel
+    Left = 269
+    Top = 79
+    Width = 35
+    Height = 18
+    Cursor = crHandPoint
+    Caption = 'JEDI,'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clBlue
+    Font.Height = -15
+    Font.Name = 'Tahoma'
+    Font.Style = [fsUnderline]
+    Font.Quality = fqNonAntialiased
+    ParentFont = False
+    OnClick = LabelJEDIClick
+  end
+  object LabelVirtualTreeview: TLabel
+    Left = 309
+    Top = 79
+    Width = 103
+    Height = 18
+    Cursor = crHandPoint
+    Caption = 'Virtual Treeview'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clBlue
+    Font.Height = -15
+    Font.Name = 'Tahoma'
+    Font.Style = [fsUnderline]
+    Font.Quality = fqNonAntialiased
+    ParentFont = False
+    OnClick = LabelVirtualTreeviewClick
+  end
+  object LabelIndy: TLabel
+    Left = 446
+    Top = 79
+    Width = 87
+    Height = 18
+    Cursor = crHandPoint
+    Caption = 'Indy projects'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clBlue
+    Font.Height = -15
+    Font.Name = 'Tahoma'
+    Font.Style = [fsUnderline]
+    Font.Quality = fqNonAntialiased
+    ParentFont = False
+    OnClick = LabelIndyClick
+  end
+  object LabelAnd: TLabel
+    Left = 416
+    Top = 79
+    Width = 24
+    Height = 18
+    Caption = 'and'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -15
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    Font.Quality = fqNonAntialiased
+    ParentFont = False
+  end
+  object LabelComma2: TLabel
+    Left = 299
+    Top = 79
+    Width = 5
+    Height = 18
+    Caption = ','
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -15
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    Font.Quality = fqNonAntialiased
+    ParentFont = False
+  end
+  object LabelComma1: TLabel
+    Left = 259
+    Top = 79
+    Width = 5
+    Height = 18
+    Caption = ','
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -15
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    Font.Quality = fqNonAntialiased
     ParentFont = False
   end
   object MemoLGPL: TMemo
     Left = 8
     Top = 131
-    Width = 501
+    Width = 523
     Height = 254
     Anchors = [akLeft, akTop, akRight, akBottom]
     Font.Charset = DEFAULT_CHARSET
@@ -364,7 +471,7 @@ object FormAbout: TFormAbout
   object MemoMIT: TMemo
     Left = 8
     Top = 131
-    Width = 501
+    Width = 523
     Height = 254
     Anchors = [akLeft, akTop, akRight, akBottom]
     Font.Charset = DEFAULT_CHARSET
@@ -442,7 +549,7 @@ object FormAbout: TFormAbout
   object PanelHeader: TPanel
     Left = 0
     Top = 0
-    Width = 517
+    Width = 539
     Height = 73
     Align = alTop
     BevelEdges = [beBottom]
