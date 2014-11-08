@@ -84,9 +84,8 @@
 			</DelphiCompile>
 			<DCCReference Include="WebUpdate.JSON.Channel.pas"/>
 			<DCCReference Include="WebUpdate.JSON.Channels.pas"/>
-			<DCCReference Include="WebUpdate.Updater.pas">
+			<DCCReference Include="WebUpdate.GUI.Updater.pas">
 				<Form>FormWebUpdate</Form>
-				<FormType>dfm</FormType>
 			</DCCReference>
 			<DCCReference Include="WebUpdate.MD5.pas"/>
 			<BuildConfiguration Include="Release">

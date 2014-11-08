@@ -7,15 +7,19 @@ uses
   WebUpdate.JSON.Serializer;
 
 type
+  TWebUpdateFileAction = (iaAdd, iaDelete);
+
   TWebUpdateFileItem = class
   private
     FFileName: TFileName;
     FFileSize: Integer;
     FModified: TDateTime;
     FMD5Hash: Integer;
+    FAction: TWebUpdateFileAction;
   public
     constructor Create;
 
+    property Action: TWebUpdateFileAction read FAction write FAction;
     property FileName: TFileName read FFileName write FFileName;
     property FileSize: Integer read FFileSize write FFileSize;
     property Modified: TDateTime read FModified write FModified;
@@ -55,6 +59,7 @@ begin
   FFileSize := 0;
   FModified := 0;
   FMD5Hash := 0;
+  FAction := iaAdd;
 end;
 
 

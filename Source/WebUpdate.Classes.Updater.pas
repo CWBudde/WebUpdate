@@ -12,27 +12,33 @@ type
 
   TFileItem = class
   type
-    TFileAction = (faAdd, faChange, faDelete);
+    TFileAction = (faAdd, faChange, faDelete, faVerify);
   private
     FFileName: TFileName;
     FLocalFileName: TFileName;
     FMD5Hash: Integer;
     FAction: TFileAction;
     FModified: TDateTime;
+    FFileSize: Integer;
     procedure SetFileName(const Value: TFileName);
   protected
     procedure UpdateLocalFileName;
   public
-    constructor Create(const FileName: TFileName; MD5Hash: Integer); overload;
-    constructor Create(const FileName: TFileName); overload;
+    constructor Create(const FileName: TFileName; MD5Hash: Integer = 0;
+      FileSize: Integer = 0; Modified: TDateTime = 0);
 
     property FileName: TFileName read FFileName write SetFileName;
     property LocalFileName: TFileName read FLocalFileName;
     property MD5Hash: Integer read FMD5Hash write FMD5Hash;
     property Action: TFileAction read FAction write FAction;
     property Modified: TDateTime read FModified write FModified;
+    property FileSize: Integer read FFileSize write FFileSize;
   end;
-  TFileItemList = TList<TFileItem>;
+
+  TFileItemList = class(TList<TFileItem>)
+  public
+    function LocateItemByFileName(const FileName: TFileName): TFileItem;
+  end;
 
   TUpdaterThread = class(TThread)
   type
@@ -58,8 +64,7 @@ type
     procedure RunScript(SourceCode: string);
     procedure Execute; override;
   public
-    constructor Create; reintroduce;
-    destructor Destroy; override;
+    constructor Create(const Files: TFileItemList); reintroduce;
 
     property Files: TFileItemList read FFiles;
     property BasePath: string read FBasePath write FBasePath;
@@ -81,10 +86,11 @@ type
     FChannelName: string;
     FChannels: TWebUpdateChannels;
     FChannelsFileName: TFileName;
-    FLocalBasePath: string;
-    FLocalFileName: TFileName;
+    FLocalChannelFileName: TFileName;
     FNewSetup: TWebUpdateChannelSetup;
     FThread: TUpdaterThread;
+    FFileItemListCache: TFileItemList;
+    FTotalSize: Int64;
 
     FOnFileNameProgress: TUpdaterThread.TFileNameProgressEvent;
     FOnScriptErrors: TUpdaterThread.TScriptErrorsEvent;
@@ -92,16 +98,26 @@ type
     FOnMD5Mismatch: TUpdaterThread.TMD5MismatchEvent;
     FOnProgress: TUpdaterThread.TProgressEvent;
 
+    function GetChannelBasePath: string;
+    function GetFileItemList: TFileItemList;
+    function GetMainAppFileName: TFileName;
+    procedure SetChannelName(const Value: string);
+    procedure SetBaseURL(const Value: string);
+    procedure SetChannelsFileName(const Value: TFileName);
+    procedure SetLocalChannelFileName(const Value: TFileName);
+    function GetTotalSize: Int64;
+  protected
     procedure MD5MismatchHandler(Sender: TObject; const FileName: TFileName; var Ignore: Boolean);
     procedure ProgressEventHandler(Sender: TObject; Progress: Integer; ByteCount: Integer);
     procedure FileChangedEventHandler(Sender: TObject; const FileName: TFileName);
     procedure ScriptErrorsEventHandler(Sender: TObject; const MessageList: TdwsMessageList);
     procedure DoneEventHandler(Sender: TObject);
-    function GetChannelBasePath: string;
-    function GetMainAppFileName: TFileName;
-  protected
+
+    procedure BuildFileListCache;
+    procedure ResetFileListCache;
     procedure LoadSetupFromFile(const FileName: TFileName);
     procedure LoadChannels;
+
     property ChannelBasePath: string read GetChannelBasePath;
   public
     constructor Create;
@@ -111,12 +127,14 @@ type
     procedure PerformWebUpdate;
     procedure GetChannelNames(const ChannelNames: TStringList);
 
-    property BaseURL: string read FBaseURL write FBaseURL;
-    property ChannelName: string read FChannelName write FChannelName;
+    property BaseURL: string read FBaseURL write SetBaseURL;
+    property ChannelName: string read FChannelName write SetChannelName;
     property Channels: TWebUpdateChannels read FChannels;
-    property ChannelsFileName: TFileName read FChannelsFileName write FChannelsFileName;
-    property LocalFileName: TFileName read FLocalFileName write FLocalFileName;
+    property ChannelsFileName: TFileName read FChannelsFileName write SetChannelsFileName;
+    property LocalChannelFileName: TFileName read FLocalChannelFileName write SetLocalChannelFileName;
     property MainAppFileName: TFileName read GetMainAppFileName;
+    property FileItemList: TFileItemList read GetFileItemList;
+    property TotalBytes: Int64 read GetTotalSize;
 
     property OnProgress: TUpdaterThread.TProgressEvent read FOnProgress write FOnProgress;
     property OnFileNameProgress: TUpdaterThread.TFileNameProgressEvent read FOnFileNameProgress write FOnFileNameProgress;
@@ -137,20 +155,15 @@ resourcestring
 
 { TFileItem }
 
-constructor TFileItem.Create(const FileName: TFileName; MD5Hash: Integer);
+constructor TFileItem.Create(const FileName: TFileName; MD5Hash: Integer = 0;
+  FileSize: Integer = 0; Modified: TDateTime = 0);
 begin
   FFileName := FileName;
   FMD5Hash := MD5Hash;
+  FFileSize := FileSize;
+  FModified := Modified;
   FAction := faAdd;
   UpdateLocalFileName;
-end;
-
-constructor TFileItem.Create(const FileName: TFileName);
-begin
-  FFileName := FileName;
-  UpdateLocalFileName;
-  FMD5Hash := 0;
-  FAction := faDelete;
 end;
 
 procedure TFileItem.SetFileName(const Value: TFileName);
@@ -168,23 +181,31 @@ begin
 end;
 
 
+{ TFileItemList }
+
+function TFileItemList.LocateItemByFileName(
+  const FileName: TFileName): TFileItem;
+var
+  Index: Integer;
+begin
+  Result := nil;
+  for Index := 0 to Count - 1 do
+    if UnicodeSameText(Items[Index].FileName, FileName) then
+      Exit(Items[Index]);
+end;
+
+
 { TUpdaterThread }
 
-constructor TUpdaterThread.Create;
+constructor TUpdaterThread.Create(const Files: TFileItemList);
 begin
-  FFiles := TFileItemList.Create;
+  FFiles := Files;
 
   FPreScript := '';
   FPostScript := '';
   FLastWorkCount := 0;
 
   inherited Create(False);
-end;
-
-destructor TUpdaterThread.Destroy;
-begin
-  FFiles.Free;
-  inherited;
 end;
 
 procedure TUpdaterThread.HttpWork(ASender: TObject; AWorkMode: TWorkMode;
@@ -342,6 +363,99 @@ end;
 
 { TWebUpdater }
 
+procedure TWebUpdater.BuildFileListCache;
+var
+  ChannelItem: TWebUpdateChannelItem;
+  Item: TWebUpdateFileItem;
+  FileItem: TFileItem;
+  LocalSetup: TWebUpdateChannelSetup;
+begin
+  LoadChannels;
+
+  for ChannelItem in FChannels.Items do
+    if UnicodeSameText(ChannelItem.Name, ChannelName) then
+    begin
+      LoadSetupFromFile(ChannelItem.FileName);
+      Break;
+    end;
+
+  FTotalSize := 0;
+
+  // eventually load existing setup
+  if FileExists(FLocalChannelFileName) then
+  begin
+    LocalSetup := TWebUpdateChannelSetup.Create;
+    try
+      LocalSetup.LoadFromFile(FLocalChannelFileName);
+
+      // assume deletion of all files currently present
+      for Item in LocalSetup.Items do
+      begin
+        FileItem := TFileItem.Create(Item.FileName, Item.MD5Hash, Item.FileSize,
+          Item.Modified);
+        FileItem.Action := faDelete;
+        FFileItemListCache.Add(FileItem);
+      end;
+    finally
+      LocalSetup.Free;
+    end;
+  end;
+
+  // add all files (and eventually mark as
+  for Item in FNewSetup.Items do
+  begin
+    // now check if file is already present (from local setup)
+    FileItem := FFileItemListCache.LocateItemByFileName(Item.FileName);
+
+    if Assigned(FileItem) then
+    begin
+      // check if file is marked for explicit deletion
+      if Item.Action = iaDelete then
+      begin
+        FileItem.Action := faDelete;
+
+        // set MD5 hash, size and modification date to 0 => always delete!
+        FileItem.MD5Hash := 0;
+        FileItem.Modified := 0;
+        FileItem.FileSize := 0;
+
+        Continue;
+      end;
+
+      // check if file is (supposed to be) identical to previous version
+      if (FileItem.Modified = Item.Modified) and
+        (FileItem.FileSize = Item.FileSize) and
+        (FileItem.MD5Hash = Item.MD5Hash) then
+        FileItem.Action := faVerify
+      else
+      begin
+        // set action to 'change' and update properties
+        FileItem.Action := faChange;
+        FileItem.MD5Hash := Item.MD5Hash;
+        FileItem.Modified := Item.Modified;
+        FileItem.FileSize := Item.FileSize;
+      end;
+    end
+    else
+    begin
+      FileItem := TFileItem.Create(Item.FileName, Item.MD5Hash, Item.FileSize,
+        Item.Modified);
+      FFileItemListCache.Add(FileItem);
+
+      // check if the item action is to delete the file
+      if Item.Action = iaDelete then
+      begin
+        FileItem.Action := faDelete;
+        Continue;
+      end;
+    end;
+
+    // inc total file size (if item is about to be added
+    if Item.Action <> iaDelete then
+      FTotalSize := FTotalSize + Item.FileSize;
+  end;
+end;
+
 constructor TWebUpdater.Create;
 begin
   FChannels := TWebUpdateChannels.Create;
@@ -350,8 +464,7 @@ begin
   // specify default values
   FBaseURL := RStrBaseURL;
   FChannelsFileName := RStrChannelsFile;
-  FLocalFileName := RStrLocalFile;
-  FLocalBasePath := ExtractFilePath(ParamStr(0));
+  FLocalChannelFileName := ExtractFilePath(ParamStr(0)) + RStrLocalFile;
 end;
 
 destructor TWebUpdater.Destroy;
@@ -361,6 +474,7 @@ begin
     FThread.Terminate;
 
   // free objects
+  FFileItemListCache.Free;
   FChannels.Free;
   FNewSetup.Free;
   if Assigned(FThread) then
@@ -374,12 +488,13 @@ procedure TWebUpdater.Abort;
 begin
   if Assigned(FThread) then
     FThread.Terminate;
+  ResetFileListCache;
 end;
 
 procedure TWebUpdater.DoneEventHandler(Sender: TObject);
 begin
   // save new setup
-  FNewSetup.SaveToFile(FLocalBasePath + 'WebUpdate.json');
+  FNewSetup.SaveToFile(FLocalChannelFileName);
 
   FThread := nil;
 
@@ -401,6 +516,42 @@ begin
     OnScriptErrors(Sender, MessageList);
 end;
 
+procedure TWebUpdater.SetBaseURL(const Value: string);
+begin
+  if FBaseURL <> Value then
+  begin
+    FBaseURL := Value;
+    ResetFileListCache;
+  end;
+end;
+
+procedure TWebUpdater.SetChannelName(const Value: string);
+begin
+  if FChannelName <> Value then
+  begin
+    FChannelName := Value;
+    ResetFileListCache;
+  end;
+end;
+
+procedure TWebUpdater.SetChannelsFileName(const Value: TFileName);
+begin
+  if FChannelsFileName <> Value then
+  begin
+    FChannelsFileName := Value;
+    ResetFileListCache;
+  end;
+end;
+
+procedure TWebUpdater.SetLocalChannelFileName(const Value: TFileName);
+begin
+  if FLocalChannelFileName <> Value then
+  begin
+    FLocalChannelFileName := Value;
+    ResetFileListCache;
+  end;
+end;
+
 function TWebUpdater.GetChannelBasePath: string;
 begin
   Result :=FBaseURL + ChannelName + '/';
@@ -419,113 +570,39 @@ begin
     ChannelNames.Add(Item.Name);
 end;
 
+function TWebUpdater.GetFileItemList: TFileItemList;
+begin
+  // eventually create file item list (if not already created)
+  if Assigned(FFileItemListCache) then
+    Exit(FFileItemListCache);
+
+  FFileItemListCache := TFileItemList.Create;
+  BuildFileListCache;
+  Result := FFileItemListCache;
+end;
+
 function TWebUpdater.GetMainAppFileName: TFileName;
 begin
   Result := '';
   if FNewSetup.AppName <> '' then
-    Result := FLocalBasePath + StringReplace(FNewSetup.AppName, '/', '\',
-      [rfReplaceAll]);
+  begin
+    // get application name
+    Result := StringReplace(FNewSetup.AppName, '/', '\', [rfReplaceAll]);
+
+    // now add local path information
+    Result := ExtractFilePath(FLocalChannelFileName) + Result;
+  end;
+end;
+
+function TWebUpdater.GetTotalSize: Int64;
+begin
+  GetFileItemList;
+  Result := FTotalSize;
 end;
 
 procedure TWebUpdater.PerformWebUpdate;
-var
-  TotalBytes: Integer;
-
-  procedure AddFileItem(Item: TWebUpdateFileItem);
-  var
-    FileItem: TFileItem;
-  begin
-    FileItem := TFileItem.Create(Item.FileName, Item.MD5Hash);
-    FileItem.Modified := Item.Modified;
-    FThread.Files.Add(FileItem);
-    TotalBytes := TotalBytes + Item.FileSize;
-  end;
-
-var
-  ChannelItem: TWebUpdateChannelItem;
-  Item, CurrentItem: TWebUpdateFileItem;
-  FileItem: TFileItem;
-  LocalSetup: TWebUpdateChannelSetup;
-  ItemFlag: Boolean;
 begin
-  LoadChannels;
-
-  for ChannelItem in FChannels.Items do
-    if UnicodeSameText(ChannelItem.Name, ChannelName) then
-    begin
-      LoadSetupFromFile(ChannelItem.FileName);
-      Break;
-    end;
-
-  FThread := TUpdaterThread.Create;
-
-  TotalBytes := 0;
-
-  // eventually load existing setup
-  if FileExists(FLocalBasePath + FLocalFileName) then
-  begin
-    LocalSetup := TWebUpdateChannelSetup.Create;
-    try
-      LocalSetup.LoadFromFile(FLocalBasePath + FLocalFileName);
-
-      for Item in FNewSetup.Items do
-      begin
-        // assume the item should be added to the files list
-        ItemFlag := True;
-
-        // now check items in current setup to see if this must be replaced
-        for CurrentItem in LocalSetup.Items do
-        begin
-          if UnicodeSameText(CurrentItem.FileName, Item.FileName) then
-          begin
-            ItemFlag := CurrentItem.Modified <> Item.Modified;
-            Break;
-          end;
-        end;
-
-        // eventually add the item and increase the total number of bytes
-        if ItemFlag then
-          AddFileItem(Item);
-      end;
-
-      // add files to delete list (if not part of the "FilesToAdd" list)
-      for CurrentItem in LocalSetup.Items do
-      begin
-        // assume file shall be deleted
-        ItemFlag := True;
-
-        // check if file is among the add list
-        for FileItem in FThread.Files do
-          if UnicodeSameText(CurrentItem.FileName, FileItem.FileName) then
-          begin
-            ItemFlag := False;
-            Break;
-          end
-          else
-            FileItem.Action := faChange;
-
-        // add file to delete list
-        if ItemFlag then
-        begin
-          FileItem := TFileItem.Create(CurrentItem.FileName);
-          FileItem.Action := faDelete;
-          FThread.Files.Add(FileItem);
-        end;
-      end;
-    finally
-      LocalSetup.Free;
-    end;
-  end
-  else
-  begin
-    // add all files
-    for Item in FNewSetup.Items do
-      AddFileItem(Item);
-  end;
-
-
-//  ProgressBarTotal.Max := TotalBytes;
-
+  FThread := TUpdaterThread.Create(FileItemList);
 
   // specify event handlers
   FThread.OnProgress := ProgressEventHandler;
@@ -536,7 +613,7 @@ begin
 
   // specify paths
   FThread.BasePath := ChannelBasePath;
-  FThread.LocalPath := FLocalBasePath;
+  FThread.LocalPath := ExtractFilePath(FLocalChannelFileName);
 
   FThread.Suspended := False;
 end;
@@ -585,6 +662,11 @@ begin
   // event redirection
   if Assigned(OnProgress) then
     OnProgress(Sender, Progress, ByteCount);
+end;
+
+procedure TWebUpdater.ResetFileListCache;
+begin
+  FreeAndNil(FFileItemListCache);
 end;
 
 procedure TWebUpdater.LoadChannels;
