@@ -1,7 +1,7 @@
 object FormWebUpdateTool: TFormWebUpdateTool
   Left = 0
   Top = 0
-  Caption = 'Web Update Tool'
+  Caption = 'Web Update Authoring Tool'
   ClientHeight = 382
   ClientWidth = 528
   Color = clBtnFace

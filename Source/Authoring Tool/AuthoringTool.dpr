@@ -1,4 +1,4 @@
-program WebUpdateTool;
+program AuthoringTool;
 
 uses
   Vcl.Forms,

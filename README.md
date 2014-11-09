@@ -20,7 +20,7 @@ Command-line switches (Authoring tool)
 
 In case you want to automate the authoring tool, you can use the following command-line switches. In fact the tool will still be a GUI-tool, but with a hidden user interface, so don't expect any output of the tool. Following, all commands and options are listed: 
 
-    Syntax: WebUpdateTool.exe project.wup command [more commands] [-options]
+    Syntax: AuthoringTool.exe project.wup command [more commands] [-options]
     
       project.wup must be replaced by your project name
     
@@ -43,7 +43,7 @@ In case you want to automate the authoring tool, you can use the following comma
     Example:
     --------
     
-      WebUpdateTool.exe project.wup scu -Channel=Beta
+      AuthoringTool.exe project.wup scu -Channel=Beta
 
 
 Command-line switches (Updater)
