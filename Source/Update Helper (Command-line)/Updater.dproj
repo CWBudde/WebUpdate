@@ -123,9 +123,6 @@
 			<DCCReference Include="..\Common\WebUpdate.JSON.Serializer.pas"/>
 			<DCCReference Include="..\Common\WebUpdate.JSON.Channel.pas"/>
 			<DCCReference Include="..\Common\WebUpdate.JSON.Channels.pas"/>
-			<DCCReference Include="WebUpdate.GUI.Updater.pas">
-				<Form>FormWebUpdate</Form>
-			</DCCReference>
 			<DCCReference Include="..\Common\WebUpdate.MD5.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>

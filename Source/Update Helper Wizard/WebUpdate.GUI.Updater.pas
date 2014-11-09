@@ -305,8 +305,6 @@ begin
         FWebUpdater.ChannelName := Copy(Text, EqPos, Length(Text) - EqPos)
       else if StartsText('d=', Text) then
         FDelay := StrToInt(Copy(Text, EqPos, Length(Text) - EqPos))
-      else if StartsText('h=', Text) then
-        FWebUpdater.ChannelsFileName := Copy(Text, EqPos, Length(Text) - EqPos)
       else if StartsText('l=', Text) then
         FWebUpdater.LocalChannelFileName := Copy(Text, EqPos, Length(Text) - EqPos)
       else if StartsText('e=', Text) then

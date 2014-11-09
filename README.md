@@ -58,11 +58,14 @@ While the 'Updater' tool can be started as stand-alone tool, it is supposed to w
     
       -u=URL                       (Base URL for JSON files)
       -c=Channel                   (Update Channel, default is 'Stable')
-      -f=FileName (Channel)        (Filename of channels definition file)
+      -f=FileName (Channels)       (Filename of channels definition file)
+      -d=Delay (Integer)           (Time in milliseconds before updating starts)
+      -l=FileName                  (Local filename of current setup)
+      -e=ExeFileName               (Name of main application executable)
+      -w=WindowCaption             (Caption of main application window)
+      -v                           (Verbose)
 
     Example:
     --------
     
       Updater.exe -c=Nightly
-
-    
