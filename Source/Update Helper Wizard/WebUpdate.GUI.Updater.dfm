@@ -2,7 +2,7 @@ object FormWebUpdate: TFormWebUpdate
   Left = 0
   Top = 0
   Caption = 'Web Update'
-  ClientHeight = 333
+  ClientHeight = 260
   ClientWidth = 406
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -19,8 +19,8 @@ object FormWebUpdate: TFormWebUpdate
     Left = 0
     Top = 47
     Width = 406
-    Height = 247
-    ActivePage = TabProgress
+    Height = 174
+    ActivePage = TabSelectChannel
     Align = alClient
     Style = tsFlatButtons
     TabOrder = 0
@@ -38,10 +38,11 @@ object FormWebUpdate: TFormWebUpdate
       end
       object TreeFiles: TVirtualStringTree
         Left = 0
-        Top = 20
+        Top = 23
         Width = 398
-        Height = 217
+        Height = 141
         Align = alBottom
+        Anchors = [akLeft, akTop, akRight, akBottom]
         Header.AutoSizeIndex = 0
         Header.Font.Charset = DEFAULT_CHARSET
         Header.Font.Color = clWindowText
@@ -138,7 +139,7 @@ object FormWebUpdate: TFormWebUpdate
       OnShow = TabProgressShow
       DesignSize = (
         398
-        237)
+        164)
       object LabelTotalStatus: TLabel
         Left = 3
         Top = 3
@@ -154,9 +155,9 @@ object FormWebUpdate: TFormWebUpdate
         Caption = 'Current file:'
       end
       object LabelRemainingTime: TLabel
-        Left = 178
+        Left = 191
         Top = 41
-        Width = 217
+        Width = 204
         Height = 15
         Alignment = taRightJustify
         Anchors = [akLeft, akTop, akRight]
@@ -550,7 +551,7 @@ object FormWebUpdate: TFormWebUpdate
   end
   object PanelControl: TPanel
     Left = 0
-    Top = 294
+    Top = 221
     Width = 406
     Height = 39
     Align = alBottom

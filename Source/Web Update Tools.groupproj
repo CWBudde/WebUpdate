@@ -3,10 +3,10 @@
 			<ProjectGuid>{0F76F6EF-5669-4EF1-AB45-2FC4E56B085A}</ProjectGuid>
 		</PropertyGroup>
 		<ItemGroup>
-			<Projects Include="WebUpdateTool.dproj">
+			<Projects Include="Authoring Tool\WebUpdateTool.dproj">
 				<Dependencies/>
 			</Projects>
-			<Projects Include="Updater.dproj">
+			<Projects Include="Update Helper Wizard\Updater.dproj">
 				<Dependencies/>
 			</Projects>
 		</ItemGroup>
@@ -18,22 +18,22 @@
 			</BorlandProject>
 		</ProjectExtensions>
 		<Target Name="WebUpdateTool">
-			<MSBuild Projects="WebUpdateTool.dproj"/>
+			<MSBuild Projects="Authoring Tool\WebUpdateTool.dproj"/>
 		</Target>
 		<Target Name="WebUpdateTool:Clean">
-			<MSBuild Targets="Clean" Projects="WebUpdateTool.dproj"/>
+			<MSBuild Targets="Clean" Projects="Authoring Tool\WebUpdateTool.dproj"/>
 		</Target>
 		<Target Name="WebUpdateTool:Make">
-			<MSBuild Targets="Make" Projects="WebUpdateTool.dproj"/>
+			<MSBuild Targets="Make" Projects="Authoring Tool\WebUpdateTool.dproj"/>
 		</Target>
 		<Target Name="Updater">
-			<MSBuild Projects="Updater.dproj"/>
+			<MSBuild Projects="Update Helper Wizard\Updater.dproj"/>
 		</Target>
 		<Target Name="Updater:Clean">
-			<MSBuild Targets="Clean" Projects="Updater.dproj"/>
+			<MSBuild Targets="Clean" Projects="Update Helper Wizard\Updater.dproj"/>
 		</Target>
 		<Target Name="Updater:Make">
-			<MSBuild Targets="Make" Projects="Updater.dproj"/>
+			<MSBuild Targets="Make" Projects="Update Helper Wizard\Updater.dproj"/>
 		</Target>
 		<Target Name="Build">
 			<CallTarget Targets="WebUpdateTool;Updater"/>
