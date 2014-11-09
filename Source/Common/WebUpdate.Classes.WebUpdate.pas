@@ -1,4 +1,4 @@
-unit WebUpdate.WebUpdate;
+unit WebUpdate.Classes.WebUpdate;
 
 interface
 

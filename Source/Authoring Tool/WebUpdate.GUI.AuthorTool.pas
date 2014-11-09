@@ -10,7 +10,7 @@ uses
   Vcl.Dialogs, Vcl.ComCtrls, Vcl.ToolWin, Vcl.Menus, Vcl.ActnList,
   Vcl.StdActns, Vcl.ImgList, Vcl.StdCtrls, Vcl.ExtCtrls,
   IdComponent, VirtualTrees, WebUpdate.JSON.Preferences, WebUpdate.JSON.Project,
-  WebUpdate.JSON.Channels, WebUpdate.JSON.Channel, WebUpdate.WebUpdate;
+  WebUpdate.JSON.Channels, WebUpdate.JSON.Channel, WebUpdate.Classes.WebUpdate;
 
 type
   TChannelItem = record

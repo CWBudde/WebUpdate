@@ -12,7 +12,7 @@ uses
   WebUpdate.JSON.Project in 'WebUpdate.JSON.Project.pas',
   WebUpdate.JSON.Serializer in '..\Common\WebUpdate.JSON.Serializer.pas',
   WebUpdate.MD5 in '..\Common\WebUpdate.MD5.pas',
-  WebUpdate.WebUpdate in '..\Common\WebUpdate.WebUpdate.pas';
+  WebUpdate.Classes.WebUpdate in '..\Common\WebUpdate.Classes.WebUpdate.pas';
 
 {$R *.res}
 

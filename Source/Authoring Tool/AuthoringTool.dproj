@@ -45,6 +45,12 @@
 			<CfgParent>Base</CfgParent>
 			<Base>true</Base>
 		</PropertyGroup>
+		<PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Cfg_2)'=='true') or '$(Cfg_2_Win64)'!=''">
+			<Cfg_2_Win64>true</Cfg_2_Win64>
+			<CfgParent>Cfg_2</CfgParent>
+			<Cfg_2>true</Cfg_2>
+			<Base>true</Base>
+		</PropertyGroup>
 		<PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Cfg_2)'=='true') or '$(Cfg_2_Win32)'!=''">
 			<Cfg_2_Win32>true</Cfg_2_Win32>
 			<CfgParent>Cfg_2</CfgParent>
@@ -52,8 +58,8 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
+			<Icon_MainIcon>..\..\Glyphs\WebUpdate.ico</Icon_MainIcon>
 			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-			<Icon_MainIcon>..\..\Glyphs\Other.ico</Icon_MainIcon>
 			<DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
 			<Manifest_File>None</Manifest_File>
 			<VerInfo_Locale>2057</VerInfo_Locale>
@@ -64,7 +70,6 @@
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base_Win64)'!=''">
 			<VerInfo_Locale>1033</VerInfo_Locale>
-			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
 			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
 			<DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
 			<DCC_UsePackage>AbbreviaVCL;TeeDB;vclimg;vcldb;vcldsnap;vclribbon;EasyListviewD16;vcl;webdsnap;OmniThreadLibraryRuntimeXE2;GR32_RSXE2;Tee;SynEdit_RXE2;O408_r;vclactnband;TeeUI;bindcompvcl;vclie;vcltouch;websnap;VclSmp;dsnapcon;vclx;MPCommonLibD16;VirtualTreesR;O408br;$(DCC_UsePackage)</DCC_UsePackage>
@@ -72,7 +77,6 @@
 		<PropertyGroup Condition="'$(Base_Win32)'!=''">
 			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
 			<VerInfo_Locale>1033</VerInfo_Locale>
-			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
 			<DCC_UsePackage>JvBDE;JvGlobus;fsADO16;AggPasRunXE2;JvMM;JvManagedThreads;AbbreviaVCL;USBDeviceTreePkg;JvDlgs;Alcinoe_d2007;TeeDB;JvCrypt;frxTee16;inetdbbde;frxBDE16;ColorPickerButtonD16;GLScene_RunTime;JvNet;JvDotNetCtrls;PrintPreview;ECXMLParserD160;DIHtmlParser_DXE2;vclimg;fmi;JvXPCtrls;GeckoSDK;vcldb;GLS_Computing_RunTime;vcldsnap;mbColorLibD16;OpenWireEditorDsnD16;DeHL_Package;ChromeTabs_XE2_R;MetaGraphics_D16;GR32_AddOn_RSXE2;DCEF_XE2;JvCore;frxADO16;vclribbon;frxe16;EasyListviewD16;vcl;ewbrun;fsTee16;GeckoComponents;JvAppFrm;JvDB;hexlicensemgr;DAV_ASIOHost_D16;webdsnap;JvRuntimeDesign;OmniThreadLibraryRuntimeXE2;JclDeveloperTools;GR32_RSXE2;BMSpinEdit;GR32_DSGN_RSXE2;JvDocking;JvWizards;madBasic_;GR32_FreeType_XE2;JvHMI;frxDBX16;JvBands;vcldbx;GR32_Controls_D16;frx16;DAV_Common_D16;JvPluginSystem;mrMath;DAV_DSP_D16;MFControls;Tee;JclContainers;dhcomps;JvCmp;madDisAsm_;JvSystem;svnui;JvTimeFramework;SynEdit_RXE2;JvControls;fsBDE16;frxDB16;DAV_GUI_D16;O408_r;vclactnband;TeeUI;JvJans;bindcompvcl;JvStdCtrls;JvCustom;Jcl;vclie;JvPageComps;JvPrintPreview;fs16;madExcept_;frxcs16;vcltouch;websnap;ExceptionExpert16;CrossFPC_XE2;VclSmp;fsDB16;DAV_SEHost_D16;DScintillaRuntime;dsnapcon;FlatControls;JclVcl;JvPascalInterpreter;GR32_Charts_D16;vclx;MPCommonLibD16;SuperTrackbar_D16;svn;OPDE;CPortLibDXE2;bdertl;RemObjects_Synapse_D16;ExpertTools;VirtualTreesR;DAV_VSTHost_D16;O408br;$(DCC_UsePackage)</DCC_UsePackage>
 			<DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
 		</PropertyGroup>
@@ -84,14 +88,12 @@
 			<DCC_RemoteDebug>true</DCC_RemoteDebug>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
-			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
 			<VerInfo_Locale>1033</VerInfo_Locale>
 			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
 			<Debugger_RunParams>WebUpdate.wup sc -Channel:Nightly</Debugger_RunParams>
 			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
-			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
 			<VerInfo_Locale>1033</VerInfo_Locale>
 			<DCC_RemoteDebug>false</DCC_RemoteDebug>
 		</PropertyGroup>
@@ -101,8 +103,11 @@
 			<DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
 			<DCC_DebugInformation>false</DCC_DebugInformation>
 		</PropertyGroup>
+		<PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
+			<VerInfo_Locale>1033</VerInfo_Locale>
+			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
+		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
-			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
 			<VerInfo_Locale>1033</VerInfo_Locale>
 			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
 		</PropertyGroup>
@@ -128,7 +133,7 @@
 			<DCCReference Include="WebUpdate.JSON.Project.pas"/>
 			<DCCReference Include="..\Common\WebUpdate.JSON.Serializer.pas"/>
 			<DCCReference Include="..\Common\WebUpdate.MD5.pas"/>
-			<DCCReference Include="..\Common\WebUpdate.WebUpdate.pas"/>
+			<DCCReference Include="..\Common\WebUpdate.Classes.WebUpdate.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

@@ -39,10 +39,10 @@ requires
 contains
   WebUpdate.MD5 in '..\Source\Common\WebUpdate.MD5.pas',
   WebUpdate.Classes.Updater in '..\Source\Common\WebUpdate.Classes.Updater.pas',
+  WebUpdate.Classes.WebUpdate in '..\Source\Common\WebUpdate.Classes.WebUpdate.pas',
   WebUpdate.JSON.Channels in '..\Source\Common\WebUpdate.JSON.Channels.pas',
   WebUpdate.JSON.Channel in '..\Source\Common\WebUpdate.JSON.Channel.pas',
   WebUpdate.JSON.Serializer in '..\Source\Common\WebUpdate.JSON.Serializer.pas',
-  WebUpdate.WebUpdate in '..\Source\Common\WebUpdate.WebUpdate.pas',
   WebUpdate.Package.Component in '..\Source\Package\WebUpdate.Package.Component.pas';
 
 end.
