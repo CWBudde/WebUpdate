@@ -1,4 +1,4 @@
-program Updater;
+program UpdaterWizard;
 
 uses
   Vcl.Forms,

@@ -85,6 +85,9 @@ uses
   System.StrUtils, WinAPI.ShellAPI, WinAPI.TlHelp32, dwsUtils, WebUpdate.MD5;
 
 resourcestring
+  RStrBaseURL = 'http://www.savioursofsoul.de/Christian/WebUpdate/';
+
+resourcestring
   RStrMD5MismatchUpdate = 'MD5 mismatch, update might be corrupt!';
   RStrUnknownOption = 'Unknown option: %s!';
   RStrUnknownCommand = 'Unknown command: %s';
@@ -175,6 +178,7 @@ begin
 
   // create WebUpdater
   FWebUpdater := TWebUpdater.Create;
+  FWebUpdater.BaseURL := RStrBaseURL;
   FWebUpdater.OnProgress := ProgressEventHandler;
   FWebUpdater.OnFileNameProgress := FileNameProgressEventHandler;
   FWebUpdater.OnDone := WebUpdateCompleteEventHandler;

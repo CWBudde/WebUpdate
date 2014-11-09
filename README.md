@@ -54,7 +54,7 @@ While the 'Updater' tool can be started as stand-alone tool, it is supposed to w
     Syntax: Updater.exe [-options]
     
     Options:
-    ---------
+    --------
     
       -u=URL                       (Base URL for JSON files)
       -c=Channel                   (Update Channel, default is 'Stable')

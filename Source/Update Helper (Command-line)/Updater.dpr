@@ -8,8 +8,10 @@ uses
   System.SysUtils,
   System.Classes,
   System.StrUtils,
+{$IFDEF MSWINDOWS}
   WinApi.Windows,
   WinApi.TlHelp32,
+{$ENDIF}
   WebUpdate.Classes.Updater in '..\Common\WebUpdate.Classes.Updater.pas',
   WebUpdate.JSON.Serializer in '..\Common\WebUpdate.JSON.Serializer.pas',
   WebUpdate.JSON.Channel in '..\Common\WebUpdate.JSON.Channel.pas',
@@ -17,17 +19,20 @@ uses
   WebUpdate.MD5 in '..\Common\WebUpdate.MD5.pas';
 
 resourcestring
-  RStrMD5MismatchUpdate = 'MD5 mismatch, update might be corrupt!';
-  RStrUnknownOption = 'Unknown option: %s!';
-  RStrUnknownCommand = 'Unknown command: %s';
-  RStrChannelDefinitionError = 'Could not load channel definition!';
-  RStrSetupLoadError = 'Could not load setup!';
+  RStrMD5MismatchUpdate = 'Error: MD5 mismatch, update might be corrupt!';
+  RStrUnknownOption = 'Error: Unknown option: %s!';
+  RStrUnknownCommand = 'Error: Unknown command: %s';
+  RStrChannelDefinitionError = 'Error: Could not load channel definition!';
+  RStrSetupLoadError = 'Error: Could not load setup!';
+  RStrNoURLSpecified = 'Error: No URL specified!';
 
 var
+  Delay: Integer;
   WebUpdater: TWebUpdater;
   MainAppExecutable: string;
   MainAppWindowCaption: string;
 
+{$IFDEF MSWINDOWS}
 procedure KillProcess(ProcessID: Integer);
 var
   ProcessHandle: THandle;
@@ -115,16 +120,39 @@ begin
     if ProcessID = 0 then
       Exit;
 
-    Sleep(100);
+    Sleep(1 + Delay);
     Inc(Counter);
-  until Counter >= 50;
+  until Counter >= 10;
 
   KillProcess(ProcessID);
+end;
+{$ENDIF}
+
+procedure WriteUsage;
+begin
+  WriteLn('Syntax: Updater.exe [-options]');
+  WriteLn('');
+  WriteLn('Options:');
+  WriteLn('--------');
+  WriteLn('');
+  WriteLn('  -u=URL                       (Base URL for JSON files)');
+  WriteLn('  -c=Channel                   (Update Channel, default is ''Stable'')');
+  WriteLn('  -f=FileName (Channels)       (Filename of channels definition file)');
+  WriteLn('  -d=Delay (Integer)           (Time in milliseconds before updating starts)');
+  WriteLn('  -l=FileName                  (Local filename of current setup)');
+  WriteLn('  -e=ExeFileName               (Name of main application executable)');
+  WriteLn('  -w=WindowCaption             (Caption of main application window)');
+  WriteLn('');
+  WriteLn('Example:');
+  WriteLn('--------');
+  WriteLn('');
+  WriteLn('  Updater.exe -c=Nightly');
+  WriteLn('');
 end;
 
 procedure ScanParameters;
 var
-  Index, Delay: Integer;
+  Index: Integer;
   Text: string;
   EqPos: Integer;
 begin
@@ -148,34 +176,41 @@ begin
         Delay := StrToInt(Copy(Text, EqPos, Length(Text) - EqPos))
       else if StartsText('l=', Text) then
         WebUpdater.LocalChannelFileName := Copy(Text, EqPos, Length(Text) - EqPos)
+{$IFDEF MSWINDOWS}
       else if StartsText('e=', Text) then
         MainAppExecutable := Copy(Text, EqPos, Length(Text) - EqPos)
       else if StartsText('w=', Text) then
         MainAppWindowCaption := Copy(Text, EqPos, Length(Text) - EqPos)
+{$ENDIF}
       else
       begin
         WriteLn(Format(RStrUnknownOption, [Text]));
-        Exit;
+        WriteLn('');
+        WriteUsage;
+        Halt(100);
       end;
     end
     else
       WriteLn(Format(RStrUnknownCommand, [Text]));
+        WriteLn('');
+        WriteUsage;
+        Halt(101);
   end;
 
-  // check for command-line calling
-  if ParamCount >= 1 then
+  if WebUpdater.BaseURL = '' then
   begin
-    Sleep(1 + Delay);
+    WriteLn(RStrNoURLSpecified);
+    WriteLn('');
+    WriteUsage;
+    Halt(102);
+  end;
 
-    // close main application
-    CloseMainApplication;
-
-    // perform web update
-    WebUpdater.PerformWebUpdate;
-  end
-  else
+  if WebUpdater.ChannelsFileName = '' then
   begin
-    // Write usage
+    WriteLn('Error: No file name for channels definition specified!');
+    WriteLn('');
+    WriteUsage;
+    Halt(103);
   end;
 end;
 
@@ -184,6 +219,17 @@ begin
     WebUpdater := TWebUpdater.Create;
     try
       ScanParameters;
+
+      // give main application some time to close
+      Sleep(1 + Delay);
+
+{$IFDEF MSWINDOWS}
+      // close main application
+      CloseMainApplication;
+{$ENDIF}
+
+      // perform web update
+      WebUpdater.PerformWebUpdate;
     finally
       WebUpdater.Free;
     end;

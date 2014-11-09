@@ -148,11 +148,6 @@ implementation
 uses
   dwsUtils, WebUpdate.MD5;
 
-resourcestring
-  RStrBaseURL = 'http://www.savioursofsoul.de/Christian/WebUpdate/';
-  RStrChannelsFile = 'Channels.json';
-  RStrLocalFile = 'WebUpdate.json';
-
 { TFileItem }
 
 constructor TFileItem.Create(const FileName: TFileName; MD5Hash: Integer = 0;
@@ -462,9 +457,9 @@ begin
   FNewSetup := TWebUpdateChannelSetup.Create;
 
   // specify default values
-  FBaseURL := RStrBaseURL;
-  FChannelsFileName := RStrChannelsFile;
-  FLocalChannelFileName := ExtractFilePath(ParamStr(0)) + RStrLocalFile;
+  FBaseURL := '';
+  FChannelsFileName := 'Channels.json';
+  FLocalChannelFileName := ExtractFilePath(ParamStr(0)) + 'WebUpdate.json';
 end;
 
 destructor TWebUpdater.Destroy;

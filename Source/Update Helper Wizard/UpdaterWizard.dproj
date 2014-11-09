@@ -3,7 +3,7 @@
 			<ProjectGuid>{2AD69CCE-006B-45F1-A5F5-7763D22A0AB9}</ProjectGuid>
 			<ProjectVersion>13.4</ProjectVersion>
 			<FrameworkType>VCL</FrameworkType>
-			<MainSource>Updater.dpr</MainSource>
+			<MainSource>UpdaterWizard.dpr</MainSource>
 			<Base>True</Base>
 			<Config Condition="'$(Config)'==''">Debug</Config>
 			<Platform Condition="'$(Platform)'==''">Win32</Platform>
@@ -145,7 +145,7 @@
 			<BorlandProject>
 				<Delphi.Personality>
 					<Source>
-						<Source Name="MainSource">Updater.dpr</Source>
+						<Source Name="MainSource">UpdaterWizard.dpr</Source>
 					</Source>
 					<VersionInfo>
 						<VersionInfo Name="IncludeVerInfo">False</VersionInfo>
