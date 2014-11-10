@@ -85,7 +85,7 @@ uses
   System.StrUtils, WinAPI.ShellAPI, WinAPI.TlHelp32, dwsUtils, WebUpdate.MD5;
 
 resourcestring
-  RStrBaseURL = 'http://www.savioursofsoul.de/Christian/WebUpdate/';
+  RStrBaseURL = 'https://raw.githubusercontent.com/CWBudde/WebUpdate/master/Binaries/WebUpdate/';
 
 resourcestring
   RStrMD5MismatchUpdate = 'MD5 mismatch, update might be corrupt!';

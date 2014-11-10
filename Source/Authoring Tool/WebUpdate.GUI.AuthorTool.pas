@@ -1148,7 +1148,7 @@ begin
       // copy file
       DestFileName := ExpandFileName(Path + ChannelName + '\' + FileItem.FileName);
       ForceDirectories(ExtractFileDir(DestFileName));
-      CopyFile(PChar(RealFileName), PChar(DestFileName), True);
+      CopyFile(PChar(RealFileName), PChar(DestFileName), False);
 
       // set file date/time according to the JSON file
       FileSetDate(DestFileName, DateTimeToFileDate(FileItem.Modified));
@@ -1161,7 +1161,7 @@ begin
   WriteStatus('Copying channel setup...');
   DestFileName := ExpandFileName(Path + ChannelName + '\' + NodeData^.FileName);
   ForceDirectories(ExtractFileDir(DestFileName));
-  CopyFile(PChar(ChannelFileName), PChar(DestFileName), True);
+  CopyFile(PChar(ChannelFileName), PChar(DestFileName), False);
 
   // set file date/time according to the JSON file
   FileSetDate(DestFileName, DateTimeToFileDate(NodeData^.Modified));
@@ -1169,7 +1169,7 @@ begin
   // copy channel file
   WriteStatus('Copying channels list...');
   DestFileName := ExpandFileName(Path + ExtractFileName(FProject.ChannelsFilename));
-  CopyFile(PChar(FProject.FullChannelsFilename), PChar(DestFileName), True);
+  CopyFile(PChar(FProject.FullChannelsFilename), PChar(DestFileName), False);
 
   ClearStatus;
 end;

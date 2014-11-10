@@ -4,8 +4,8 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Generics.Collections,
-  IdHTTP, IdComponent, dwsComp, dwsExprs, dwsErrors,
-  WebUpdate.JSON.Channels, WebUpdate.JSON.Channel;
+  IdHTTP, IdComponent,
+  dwsComp, dwsExprs, dwsErrors, WebUpdate.JSON.Channels, WebUpdate.JSON.Channel;
 
 type
   EHttpDownload = class(Exception);
@@ -102,7 +102,7 @@ type
     function GetFileItemList: TFileItemList;
     function GetMainAppFileName: TFileName;
     procedure SetChannelName(const Value: string);
-    procedure SetBaseURL(const Value: string);
+    procedure SetBaseURL(Value: string);
     procedure SetChannelsFileName(const Value: TFileName);
     procedure SetLocalChannelFileName(const Value: TFileName);
     function GetTotalSize: Int64;
@@ -146,7 +146,7 @@ type
 implementation
 
 uses
-  dwsUtils, WebUpdate.MD5;
+  dwsUtils, IdSSLOpenSSL, WebUpdate.MD5;
 
 { TFileItem }
 
@@ -265,6 +265,11 @@ begin
 
   FHttp := TIdHTTP.Create(nil);
   try
+    // eventually create SSL IO handler
+    if FileExists(ExtractFilePath(ParamStr(0)) + 'ssleay32.dll') and
+      FileExists(ExtractFilePath(ParamStr(0)) + 'libeay32.dll') then
+      FHttp.IOHandler := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
+
     FHttp.OnWork := HttpWork;
     MS := TMemoryStream.Create;
     try
@@ -328,6 +333,7 @@ begin
       MS.Free;
     end;
   finally
+    FHttp.IOHandler.Free;
     FreeAndNil(FHttp);
   end;
 
@@ -511,11 +517,15 @@ begin
     OnScriptErrors(Sender, MessageList);
 end;
 
-procedure TWebUpdater.SetBaseURL(const Value: string);
+procedure TWebUpdater.SetBaseURL(Value: string);
 begin
+  if not StrEndsWith(Value, '/') then
+    Value := Value + '/';
+
   if FBaseURL <> Value then
   begin
     FBaseURL := Value;
+
     ResetFileListCache;
   end;
 end;
@@ -622,6 +632,11 @@ begin
   Http := TIdHTTP.Create(nil);
   try
     try
+      // eventually create SSL IO handler
+      if FileExists(ExtractFilePath(ParamStr(0)) + 'ssleay32.dll') and
+        FileExists(ExtractFilePath(ParamStr(0)) + 'libeay32.dll') then
+        Http.IOHandler := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
+
       // get text from URI
       Text := Http.Get(ChannelBasePath + FileName);
 
@@ -636,6 +651,7 @@ begin
       raise EHttpDownload.CreateFmt('Error downloading from URL %s',
         [BaseURL + ChannelsFileName]);
   finally
+    Http.IOHandler.Free;
     Http.Free;
   end;
 
@@ -673,6 +689,11 @@ begin
   Http := TIdHTTP.Create(nil);
   try
     try
+      // eventually create SSL IO handler
+      if FileExists(ExtractFilePath(ParamStr(0)) + 'ssleay32.dll') and
+        FileExists(ExtractFilePath(ParamStr(0)) + 'libeay32.dll') then
+        Http.IOHandler := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
+
       // get text from URL
       Text := Http.Get(BaseURL + ChannelsFileName);
 
@@ -687,6 +708,7 @@ begin
       raise EHttpDownload.CreateFmt('Error downloading from URL %s',
         [BaseURL + ChannelsFileName]);
   finally
+    Http.IOHandler.Free;
     Http.Free;
   end;
 

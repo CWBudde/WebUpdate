@@ -19,7 +19,7 @@ object FormWebUpdate: TFormWebUpdate
     Left = 0
     Top = 47
     Width = 406
-    Height = 174
+    Height = 177
     ActivePage = TabSelectChannel
     Align = alClient
     Style = tsFlatButtons
@@ -40,7 +40,7 @@ object FormWebUpdate: TFormWebUpdate
         Left = 0
         Top = 23
         Width = 398
-        Height = 141
+        Height = 144
         Align = alBottom
         Anchors = [akLeft, akTop, akRight, akBottom]
         Header.AutoSizeIndex = 0
@@ -139,7 +139,7 @@ object FormWebUpdate: TFormWebUpdate
       OnShow = TabProgressShow
       DesignSize = (
         398
-        164)
+        167)
       object LabelTotalStatus: TLabel
         Left = 3
         Top = 3
@@ -551,34 +551,41 @@ object FormWebUpdate: TFormWebUpdate
   end
   object PanelControl: TPanel
     Left = 0
-    Top = 221
+    Top = 224
     Width = 406
-    Height = 39
+    Height = 36
     Align = alBottom
     BevelEdges = [beTop]
     BevelKind = bkTile
     BevelOuter = bvNone
     ShowCaption = False
     TabOrder = 2
-    DesignSize = (
-      406
-      37)
     object ButtonClose: TButton
+      AlignWithMargins = True
       Left = 327
-      Top = 7
+      Top = 4
       Width = 75
-      Height = 25
-      Anchors = [akRight, akBottom]
+      Height = 26
+      Margins.Left = 4
+      Margins.Top = 4
+      Margins.Right = 4
+      Margins.Bottom = 4
+      Align = alRight
       Caption = '&Close'
       TabOrder = 0
       OnClick = ButtonAbortClick
     end
     object ButtonNext: TButton
-      Left = 246
-      Top = 7
+      AlignWithMargins = True
+      Left = 244
+      Top = 4
       Width = 75
-      Height = 25
-      Anchors = [akRight, akBottom]
+      Height = 26
+      Margins.Left = 4
+      Margins.Top = 4
+      Margins.Right = 4
+      Margins.Bottom = 4
+      Align = alRight
       Caption = '&Start >'
       Default = True
       TabOrder = 1
