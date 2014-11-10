@@ -37,6 +37,7 @@ type
     TabSheetFTP: TTabSheet;
     TabSheetMain: TTabSheet;
     TreeOptions: TVirtualStringTree;
+    CheckBoxMD5: TCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure EditChannelFileNameAfterDialog(Sender: TObject; var AName: string;
       var AAction: Boolean);

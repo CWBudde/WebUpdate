@@ -12,6 +12,9 @@
 			<Projects Include="Update Helper (Command-line)\Updater.dproj">
 				<Dependencies/>
 			</Projects>
+			<Projects Include="Example Application\ExampleApp.dproj">
+				<Dependencies/>
+			</Projects>
 		</ItemGroup>
 		<ProjectExtensions>
 			<Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -47,14 +50,23 @@
 		<Target Name="Updater:Make">
 			<MSBuild Targets="Make" Projects="Update Helper (Command-line)\Updater.dproj"/>
 		</Target>
+		<Target Name="ExampleApp">
+			<MSBuild Projects="Example Application\ExampleApp.dproj"/>
+		</Target>
+		<Target Name="ExampleApp:Clean">
+			<MSBuild Targets="Clean" Projects="Example Application\ExampleApp.dproj"/>
+		</Target>
+		<Target Name="ExampleApp:Make">
+			<MSBuild Targets="Make" Projects="Example Application\ExampleApp.dproj"/>
+		</Target>
 		<Target Name="Build">
-			<CallTarget Targets="AuthoringTool;UpdaterWizard;Updater"/>
+			<CallTarget Targets="AuthoringTool;UpdaterWizard;Updater;ExampleApp"/>
 		</Target>
 		<Target Name="Clean">
-			<CallTarget Targets="AuthoringTool:Clean;UpdaterWizard:Clean;Updater:Clean"/>
+			<CallTarget Targets="AuthoringTool:Clean;UpdaterWizard:Clean;Updater:Clean;ExampleApp:Clean"/>
 		</Target>
 		<Target Name="Make">
-			<CallTarget Targets="AuthoringTool:Make;UpdaterWizard:Make;Updater:Make"/>
+			<CallTarget Targets="AuthoringTool:Make;UpdaterWizard:Make;Updater:Make;ExampleApp:Make"/>
 		</Target>
 		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" Project="$(BDS)\Bin\CodeGear.Group.Targets"/>
 	</Project>

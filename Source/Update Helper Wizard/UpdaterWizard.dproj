@@ -5,7 +5,7 @@
 			<FrameworkType>VCL</FrameworkType>
 			<MainSource>UpdaterWizard.dpr</MainSource>
 			<Base>True</Base>
-			<Config Condition="'$(Config)'==''">Release</Config>
+			<Config Condition="'$(Config)'==''">Debug</Config>
 			<Platform Condition="'$(Platform)'==''">Win32</Platform>
 			<TargetedPlatforms>3</TargetedPlatforms>
 			<AppType>Application</AppType>
@@ -75,6 +75,7 @@
 			<DCC_UsePackage>AbbreviaVCL;TeeDB;vclimg;vcldb;vcldsnap;vclribbon;EasyListviewD16;vcl;webdsnap;OmniThreadLibraryRuntimeXE2;GR32_RSXE2;Tee;SynEdit_RXE2;O408_r;vclactnband;TeeUI;bindcompvcl;vclie;vcltouch;websnap;VclSmp;dsnapcon;vclx;MPCommonLibD16;VirtualTreesR;O408br;$(DCC_UsePackage)</DCC_UsePackage>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base_Win32)'!=''">
+			<Debugger_RunParams>-u=http://www.savioursofsoul.de/Christian/WebUpdate/ -c=Nightly -d=1000</Debugger_RunParams>
 			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
 			<VerInfo_Locale>1033</VerInfo_Locale>
 			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>

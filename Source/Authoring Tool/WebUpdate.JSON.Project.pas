@@ -45,6 +45,7 @@ type
     FCopyOptions: TCopyOptions;
     FCurrentChannel: string;
     FFtpOptions: TFTPOptions;
+    FUseMD5: Boolean;
     function GetFullChannelsFilename: TFileName;
     function GetBasePath: string;
     function GetChannelsPath: string;
@@ -66,6 +67,7 @@ type
     property CurrentChannel: string read FCurrentChannel write FCurrentChannel;
     property FullChannelsFilename: TFileName read GetFullChannelsFilename;
     property FTP: TFTPOptions read FFtpOptions;
+    property UseMD5: Boolean read FUseMD5 write FUseMD5;
   end;
 
 implementation
@@ -212,6 +214,10 @@ begin
   if Assigned(Value) then
     FAutoCopyUpload := Value.AsBoolean;
 
+  Value := Root.Items['UseMD5'];
+  if Assigned(Value) then
+    FUseMD5 := Value.AsBoolean;
+
   Value := Root.Items['FTP'];
   if Value is TdwsJSONObject then
     FFtpOptions.Read(TdwsJSONObject(Value));
@@ -235,6 +241,12 @@ begin
 
   if FCurrentChannel <> '' then
     Root.AddValue('CurrentChannel').AsString := FCurrentChannel;
+
+  if FAutoCopyUpload = True then
+    Root.AddValue('AutoCopyUpload').AsBoolean := FAutoCopyUpload;
+
+  if FUseMD5 = True then
+    Root.AddValue('UseMD5').AsBoolean := FUseMD5;
 
   // write FTP options (and add if it contains any data)
   ObjVal := TdwsJSONObject.Create;

@@ -190,6 +190,9 @@ uses
   WebUpdate.GUI.Options, WebUpdate.GUI.About, WebUpdate.GUI.CommandLine,
   WebUpdate.JSON.Serializer, WebUpdate.MD5;
 
+const
+  CBaseURL = 'https://raw.githubusercontent.com/CWBudde/WebUpdate/master/Binaries/WebUpdate/';
+
 resourcestring
   RStrFileNotFound = 'File %s not found';
   RStrNoFileSelected = 'No file selected for update!';
@@ -289,7 +292,8 @@ begin
 
   // create & setup self update
   FWebUpdate := TWebUpdate.Create;
-  FWebUpdate.GetCurrentChannelInformation;
+  FWebUpdate.BaseURL := CBaseURL;
+  FWebUpdate.GetLocalChannelInformation;
   CheckForUpdateTimer.Enabled := True;
 end;
 
@@ -367,7 +371,7 @@ end;
 
 procedure TFormWebUpdateTool.ActionCheckUpdateExecute(Sender: TObject);
 begin
-  FWebUpdate.GetChannelsInformation;
+  FWebUpdate.GetChannelsInformationFromServer;
   if FWebUpdate.CheckForUpdate then
     if MessageDlg('A new update is available!' + #13#10#13#10 +
       'Update now?', mtInformation, [mbYes, mbNo], 0) = mrYes then
@@ -458,6 +462,7 @@ begin
     EditFtpPassword.Text := Project.FTP.Password;
     CheckBoxAutoCopyUpload.Checked := Project.AutoCopyUpload;
     CheckBoxCopyTo.Checked := Project.Copy.Enabled;
+    CheckBoxMD5.Checked := Project.
     EditCopyPath.Text := Project.Copy.Path;
 
     if ShowModal = mrOk then
@@ -887,7 +892,10 @@ begin
       Item.FileName := NodeData^.WebFileName;
       Item.Modified := NodeData^.Modified;
       Item.FileSize := NodeData^.Size;
-      Item.MD5Hash := MD5(NodeData.FileName);
+      if Project.UseMD5 then
+        Item.MD5Hash := MD5(NodeData.FileName)
+      else
+        Item.MD5Hash := 0;
 
       if NodeData^.Modified > LastModified then
         LastModified := NodeData^.Modified;

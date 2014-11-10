@@ -3,7 +3,8 @@ unit WebUpdate.Classes.WebUpdate;
 interface
 
 uses
-  System.SysUtils, WebUpdate.JSON.Channels, WebUpdate.JSON.Channel;
+  System.SysUtils, System.Classes, WebUpdate.JSON.Channels,
+  WebUpdate.JSON.Channel;
 
 type
   TWebUpdate = class
@@ -19,16 +20,17 @@ type
     procedure SetChannelName(const Value: string);
   public
     constructor Create; overload;
-    constructor Create(BaseURL: string; ChannelsFileName: TFileName); overload;
+    constructor Create(BaseURL: string; ChannelsFileName: TFileName = ''); overload;
     destructor Destroy; override;
 
     function CheckForUpdate: Boolean;
-    procedure GetCurrentChannelInformation;
-    procedure GetChannelsInformation;
+    procedure GetLocalChannelInformation;
+    procedure GetChannelsInformationFromServer;
+    procedure GetChannels(Channels: TStrings);
     procedure PerformUpdate;
     procedure PerformDownloadUpdater;
 
-    property AutoGetCurrentChannelInformation: Boolean read FAutoGet write FAutoGet;
+    property AutoGetLocalChannelInformation: Boolean read FAutoGet write FAutoGet;
     property BaseURL: string read FBaseURL write FBaseURL;
     property ChannelName: string read FChannelName write SetChannelName;
     property ChannelsFileName: TFileName read FChannelsFile write FChannelsFile;
@@ -42,27 +44,24 @@ implementation
 uses
   System.StrUtils, WinApi.ShellApi, WinApi.Windows, Vcl.Forms, IdHTTP;
 
-resourcestring
-  RStrBaseURL = 'http://www.savioursofsoul.de/Christian/WebUpdate/';
-  RStrBaseFile = 'Channels.json';
-
 { TWebUpdate }
 
 constructor TWebUpdate.Create;
 begin
   FAutoGet := False;
-  FBaseURL := RStrBaseURL;
-  FChannelsFile := RStrBaseFile;
+  FBaseURL := '';
+  FChannelsFile := 'Channels.json';
   FChannelName := 'Stable';
   FChannels := TWebUpdateChannels.Create;
-  FUpdaterFileName := 'Updater.exe';
+  FUpdaterFileName := 'UpdaterWizard.exe';
 end;
 
-constructor TWebUpdate.Create(BaseURL: string; ChannelsFileName: TFileName);
+constructor TWebUpdate.Create(BaseURL: string; ChannelsFileName: TFileName = '');
 begin
   Create;
   FBaseURL := BaseURL;
-  FChannelsFile := ChannelsFileName;
+  if ChannelsFileName <> '' then
+    FChannelsFile := ChannelsFileName;
 end;
 
 destructor TWebUpdate.Destroy;
@@ -103,7 +102,7 @@ begin
     raise Exception.Create('Protocol not supported');
 end;
 
-procedure TWebUpdate.GetChannelsInformation;
+procedure TWebUpdate.GetChannelsInformationFromServer;
 var
   Http: TIdHTTP;
   Text: string;
@@ -137,23 +136,35 @@ begin
   FChannels.LoadFromString(Text);
 end;
 
-procedure TWebUpdate.GetCurrentChannelInformation;
+procedure TWebUpdate.GetChannels(Channels: TStrings);
+var
+  Item: TWebUpdateChannelItem;
+begin
+  // first get channels information from server
+  GetChannelsInformationFromServer;
+
+  Channels.Clear;
+  for Item in FChannels.Items do
+    Channels.Add(Item.Name)
+end;
+
+procedure TWebUpdate.GetLocalChannelInformation;
 var
   LocalPath: TFileName;
-  CurrentSetup: TWebUpdateChannelSetup;
+  LocalSetup: TWebUpdateChannelSetup;
 begin
   // check if a local file is present otherwise exit
   LocalPath := ExtractFilePath(ParamStr(0));
   if not FileExists(LocalPath + 'WebUpdate.json') then
     Exit;
 
-  CurrentSetup := TWebUpdateChannelSetup.Create;
+  LocalSetup := TWebUpdateChannelSetup.Create;
   try
-    CurrentSetup.LoadFromFile(LocalPath + 'WebUpdate.json');
+    LocalSetup.LoadFromFile(LocalPath + 'WebUpdate.json');
 
-    FChannelName := CurrentSetup.ChannelName;
+    FChannelName := LocalSetup.ChannelName;
   finally
-    CurrentSetup.Free;
+    LocalSetup.Free;
   end;
 end;
 
@@ -163,11 +174,11 @@ var
 begin
   Result := False;
 
-  // eventually get information about current channel
+  // eventually get information about local channel
   if FAutoGet then
-    GetCurrentChannelInformation;
+    GetLocalChannelInformation;
 
-  // locate current channel
+  // locate local channel
   for ChannelItem in FChannels.Items do
     if ChannelItem.Name = FChannelName then
       if ChannelItem.Modified > FLastModified then
@@ -176,17 +187,19 @@ end;
 
 procedure TWebUpdate.PerformUpdate;
 var
-  CurrentPath: string;
+  LocalPath: string;
+  Parameters: string;
 begin
   // eventually download updater
   if FDownloadUpdater then
     PerformDownloadUpdater;
 
-  CurrentPath := ExtractFilePath(ParamStr(0));
-  if FileExists(CurrentPath + FUpdaterFileName) then
+  LocalPath := ExtractFilePath(ParamStr(0));
+  if FileExists(LocalPath + FUpdaterFileName) then
   begin
-    ShellExecute(Application.Handle, 'open', PChar(CurrentPath + FUpdaterFileName),
-      nil, PChar(CurrentPath), SW_SHOW);
+    Parameters := '-u=' + BaseURL + ' -d=1000 -c=' + ChannelName;
+    ShellExecute(Application.Handle, 'open', PChar(LocalPath + FUpdaterFileName),
+      PChar(Parameters), PChar(LocalPath), SW_SHOW);
     Application.Terminate;
   end;
 end;

@@ -5,8 +5,8 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
-  Vcl.ComCtrls, Vcl.ExtCtrls, WebUpdate.JSON.Channels, WebUpdate.JSON.Channel,
-  WebUpdate.Classes.Updater, VirtualTrees, Vcl.ImgList;
+  Vcl.ComCtrls, Vcl.ExtCtrls, Vcl.ImgList, VirtualTrees,
+  WebUpdate.JSON.Channels, WebUpdate.JSON.Channel, WebUpdate.Classes.Updater;
 
 type
   TNodeFileItem = record
@@ -302,19 +302,19 @@ begin
       EqPos := Pos('=', Text);
 
       if StartsText('u=', Text) then
-        FWebUpdater.BaseURL := Copy(Text, EqPos, Length(Text) - EqPos)
+        FWebUpdater.BaseURL := Copy(Text, EqPos + 1, Length(Text) - EqPos)
       else if StartsText('f=', Text) then
-        FWebUpdater.ChannelsFileName := Copy(Text, EqPos, Length(Text) - EqPos)
+        FWebUpdater.ChannelsFileName := Copy(Text, EqPos + 1, Length(Text) - EqPos)
       else if StartsText('c=', Text) then
-        FWebUpdater.ChannelName := Copy(Text, EqPos, Length(Text) - EqPos)
+        FWebUpdater.ChannelName := Copy(Text, EqPos + 1, Length(Text) - EqPos)
       else if StartsText('d=', Text) then
-        FDelay := StrToInt(Copy(Text, EqPos, Length(Text) - EqPos))
+        FDelay := StrToInt(Copy(Text, EqPos + 1, Length(Text) - EqPos))
       else if StartsText('l=', Text) then
-        FWebUpdater.LocalChannelFileName := Copy(Text, EqPos, Length(Text) - EqPos)
+        FWebUpdater.LocalChannelFileName := Copy(Text, EqPos + 1, Length(Text) - EqPos)
       else if StartsText('e=', Text) then
-        FMainAppExecutable := Copy(Text, EqPos, Length(Text) - EqPos)
+        FMainAppExecutable := Copy(Text, EqPos + 1, Length(Text) - EqPos)
       else if StartsText('w=', Text) then
-        FMainAppWindowCaption := Copy(Text, EqPos, Length(Text) - EqPos)
+        FMainAppWindowCaption := Copy(Text, EqPos + 1, Length(Text) - EqPos)
       else if StartsText('verbose', Text) then
         FVerbose := True
       else

@@ -21,7 +21,7 @@ object FormOptions: TFormOptions
     Top = 0
     Width = 317
     Height = 272
-    ActivePage = TabSheetFTP
+    ActivePage = TabSheetMain
     Align = alClient
     Style = tsButtons
     TabOrder = 0
@@ -63,6 +63,14 @@ object FormOptions: TFormOptions
         DialogKind = dkWin32
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 1
+      end
+      object CheckBoxMD5: TCheckBox
+        Left = 3
+        Top = 112
+        Width = 118
+        Height = 17
+        Caption = 'Use MD5 Checksums'
+        TabOrder = 2
       end
     end
     object TabSheetFTP: TTabSheet
