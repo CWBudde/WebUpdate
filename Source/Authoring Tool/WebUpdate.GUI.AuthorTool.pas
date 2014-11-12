@@ -462,7 +462,7 @@ begin
     EditFtpPassword.Text := Project.FTP.Password;
     CheckBoxAutoCopyUpload.Checked := Project.AutoCopyUpload;
     CheckBoxCopyTo.Checked := Project.Copy.Enabled;
-    CheckBoxMD5.Checked := Project.
+    CheckBoxMD5.Checked := Project.UseMD5;
     EditCopyPath.Text := Project.Copy.Path;
 
     if ShowModal = mrOk then
@@ -783,6 +783,10 @@ begin
       ChannelItem.FileName := NodeChannelData^.FileName;
       ChannelItem.Modified := NodeChannelData^.Modified;
 
+      // eventually create MD5 checksum
+      if Project.UseMD5 and FileExists(ChannelItem.FileName) then
+        ChannelItem.MD5 := MD5(ChannelItem.FileName);
+
       FChannels.Items.Add(ChannelItem);
     end;
   finally
@@ -895,7 +899,7 @@ begin
       if Project.UseMD5 then
         Item.MD5Hash := MD5(NodeData.FileName)
       else
-        Item.MD5Hash := 0;
+        Item.MD5Hash := '';
 
       if NodeData^.Modified > LastModified then
         LastModified := NodeData^.Modified;

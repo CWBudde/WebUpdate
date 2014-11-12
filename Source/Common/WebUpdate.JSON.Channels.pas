@@ -11,6 +11,7 @@ type
     Name: string;
     FileName: TFileName;
     Modified: TDateTime;
+    MD5: string;
   end;
   TWebUpdateChannelItems = TList<TWebUpdateChannelItem>;
 
@@ -28,10 +29,6 @@ type
   end;
 
 implementation
-
-resourcestring
-  RStrBaseURL = 'http://www.savioursofsoul.de/Christian/WebUpdate/';
-  RStrBaseFile = 'Channels.json';
 
 { TWebUpdateChannels }
 
@@ -85,6 +82,11 @@ begin
     else
       Item.Modified := 0;
 
+    // get MD5 hash
+    Value := Files.Elements[Index].Items['MD5'];
+    if Assigned(Value) then
+      Item.MD5 := Value.AsString;
+
     FItems.Add(Item);
   end;
 end;
@@ -112,6 +114,10 @@ begin
     // eventually store file modification date
     if Item.Modified > 0 then
       Value.AddValue('Modified').AsString := DateTimeToISO8601(Item.Modified);
+
+    // eventually store MD5 hash
+    if Item.MD5 <> '' then
+      Value.AddValue('MD5').AsString := Item.MD5;
   end;
 end;
 

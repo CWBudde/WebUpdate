@@ -16,7 +16,7 @@ type
   private
     FFileName: TFileName;
     FLocalFileName: TFileName;
-    FMD5Hash: Integer;
+    FMD5Hash: string;
     FAction: TFileAction;
     FModified: TDateTime;
     FFileSize: Integer;
@@ -24,12 +24,12 @@ type
   protected
     procedure UpdateLocalFileName;
   public
-    constructor Create(const FileName: TFileName; MD5Hash: Integer = 0;
+    constructor Create(const FileName: TFileName; MD5Hash: string = '';
       FileSize: Integer = 0; Modified: TDateTime = 0);
 
     property FileName: TFileName read FFileName write SetFileName;
     property LocalFileName: TFileName read FLocalFileName;
-    property MD5Hash: Integer read FMD5Hash write FMD5Hash;
+    property MD5Hash: string read FMD5Hash write FMD5Hash;
     property Action: TFileAction read FAction write FAction;
     property Modified: TDateTime read FModified write FModified;
     property FileSize: Integer read FFileSize write FFileSize;
@@ -150,7 +150,7 @@ uses
 
 { TFileItem }
 
-constructor TFileItem.Create(const FileName: TFileName; MD5Hash: Integer = 0;
+constructor TFileItem.Create(const FileName: TFileName; MD5Hash: string = '';
   FileSize: Integer = 0; Modified: TDateTime = 0);
 begin
   FFileName := FileName;
@@ -256,7 +256,7 @@ procedure TUpdaterThread.Execute;
 var
   MS: TMemoryStream;
   Item: TFileItem;
-  Hash: Integer;
+  Hash: string;
   IgnoreMD5Error: Boolean;
 begin
   // eventually run pre script
@@ -305,7 +305,7 @@ begin
           Exit;
 
         // eventually check MD5 hash
-        if Item.MD5Hash <> 0 then
+        if Item.MD5Hash <> '' then
         begin
           Hash := MD5(MS);
           if Hash <> Item.MD5Hash then
@@ -416,7 +416,7 @@ begin
         FileItem.Action := faDelete;
 
         // set MD5 hash, size and modification date to 0 => always delete!
-        FileItem.MD5Hash := 0;
+        FileItem.MD5Hash := '';
         FileItem.Modified := 0;
         FileItem.FileSize := 0;
 

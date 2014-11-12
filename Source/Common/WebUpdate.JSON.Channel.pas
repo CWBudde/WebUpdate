@@ -14,7 +14,7 @@ type
     FFileName: TFileName;
     FFileSize: Integer;
     FModified: TDateTime;
-    FMD5Hash: Integer;
+    FMD5Hash: string;
     FAction: TWebUpdateFileAction;
   public
     constructor Create;
@@ -23,7 +23,7 @@ type
     property FileName: TFileName read FFileName write FFileName;
     property FileSize: Integer read FFileSize write FFileSize;
     property Modified: TDateTime read FModified write FModified;
-    property MD5Hash: Integer read FMD5Hash write FMD5Hash;
+    property MD5Hash: string read FMD5Hash write FMD5Hash;
   end;
   TWebUpdateFileItems = TList<TWebUpdateFileItem>;
 
@@ -58,7 +58,7 @@ begin
   FFileName := '';
   FFileSize := 0;
   FModified := 0;
-  FMD5Hash := 0;
+  FMD5Hash := '';
   FAction := iaAdd;
 end;
 
@@ -136,7 +136,7 @@ begin
     // get MD5 hash
     Value := FileValue.Items['MD5'];
     if Assigned(Value) then
-      Item.MD5Hash := Value.AsInteger;
+      Item.MD5Hash := Value.AsString;
 
     // add item to file items
     FItems.Add(Item);
@@ -172,7 +172,7 @@ begin
     FileValue.AddValue('FileName').AsString := Item.FileName;
     FileValue.AddValue('Size').AsInteger := Item.FileSize;
     FileValue.AddValue('Modified').AsString := DateTimeToISO8601(Item.Modified);
-    FileValue.AddValue('MD5').AsInteger := Item.MD5Hash;
+    FileValue.AddValue('MD5').AsString := Item.MD5Hash;
   end;
 
   // write app name
