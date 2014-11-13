@@ -20,6 +20,7 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ButtonPerformUpdateClick(Sender: TObject);
+    procedure ComboBoxChannelsChange(Sender: TObject);
   private
     FWebUpdate: TWebUpdate;
   end;
@@ -37,6 +38,7 @@ procedure TFormExample.FormCreate(Sender: TObject);
 begin
   FWebUpdate := TWebUpdate.Create;
   FWebUpdate.BaseURL := 'http://www.savioursofsoul.de/Christian/WebUpdate/';
+  FWebUpdate.ChannelName := 'Stable';
 end;
 
 procedure TFormExample.FormDestroy(Sender: TObject);
@@ -74,6 +76,11 @@ end;
 procedure TFormExample.ButtonPerformUpdateClick(Sender: TObject);
 begin
   FWebUpdate.PerformUpdate;
+end;
+
+procedure TFormExample.ComboBoxChannelsChange(Sender: TObject);
+begin
+  FWebUpdate.ChannelName := ComboBoxChannels.Text;
 end;
 
 procedure TFormExample.ButtonExitClick(Sender: TObject);

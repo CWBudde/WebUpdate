@@ -58,5 +58,6 @@ object FormExample: TFormExample
     Height = 21
     Style = csDropDownList
     TabOrder = 3
+    OnChange = ComboBoxChannelsChange
   end
 end

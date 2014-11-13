@@ -17,6 +17,9 @@ object FormWebUpdateTool: TFormWebUpdateTool
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
+  DesignSize = (
+    528
+    382)
   PixelsPerInch = 96
   TextHeight = 13
   object Splitter: TSplitter
@@ -33,6 +36,10 @@ object FormWebUpdateTool: TFormWebUpdateTool
     Width = 528
     Height = 19
     Panels = <
+      item
+        Style = psOwnerDraw
+        Width = 96
+      end
       item
         Width = 50
       end>
@@ -195,6 +202,14 @@ object FormWebUpdateTool: TFormWebUpdateTool
           WideText = 'Modified'
         end>
     end
+  end
+  object ProgressBar: TProgressBar
+    Left = 0
+    Top = 365
+    Width = 96
+    Height = 17
+    Anchors = [akLeft, akBottom]
+    TabOrder = 3
   end
   object MainMenu: TMainMenu
     Images = Images
@@ -408,6 +423,11 @@ object FormWebUpdateTool: TFormWebUpdateTool
       Category = 'Help'
       Caption = '&Documentation'
       ImageIndex = 14
+    end
+    object ActionClearAll: TAction
+      Category = 'Project'
+      Caption = '&Clear All'
+      ImageIndex = 6
     end
   end
   object Images: TImageList
@@ -1082,17 +1102,17 @@ object FormWebUpdateTool: TFormWebUpdateTool
       0000000000000000000000000000000000000000000000000000000000000000
       000000000000}
   end
-  object CheckForUpdateTimer: TTimer
-    Enabled = False
-    OnTimer = CheckForUpdateTimerTimer
-    Left = 320
-    Top = 72
-  end
   object PopupMenu: TPopupMenu
     Left = 168
     Top = 264
     object ScanDirectoriesandFiles1: TMenuItem
       Action = ActionScanFiles
+    end
+    object N8: TMenuItem
+      Caption = '-'
+    end
+    object MenuItemClearAll: TMenuItem
+      Action = ActionClearAll
     end
     object N2: TMenuItem
       Caption = '-'

@@ -1,13 +1,13 @@
 {
 	"ID" : "Channel",
-	"Modified" : "2014-11-10T11:55:16.155",
+	"Modified" : "2014-11-13T12:13:24.000",
 	"Name" : "Stable",
 	"Files" : [
 		{
 			"FileName" : "AuthoringTool.exe",
-			"Size" : 3520000,
-			"Modified" : "2014-11-10T11:55:16.155",
-			"MD5" : 894385822
+			"Size" : 1083392,
+			"Modified" : "2014-11-13T12:13:24.000",
+			"MD5" : ""
 		}
 	],
 	"AppName" : "AuthoringTool.exe"

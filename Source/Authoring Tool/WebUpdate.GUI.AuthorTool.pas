@@ -30,6 +30,15 @@ type
   end;
   PFileItem = ^TFileItem;
 
+  TCheckUpdateThread = class(TThread)
+  private
+    FWebUpdate: TWebUpdate;
+  public
+    constructor Create(WebUpdate: TWebUpdate);
+    procedure Execute; override;
+    procedure Update;
+  end;
+
   TFormWebUpdateTool = class(TForm)
     ActionAddChannel: TAction;
     ActionCheckUpdate: TAction;
@@ -48,7 +57,6 @@ type
     ActionTakeSnapshot: TAction;
     ActionUpdate: TAction;
     ActionViewChannel: TAction;
-    CheckForUpdateTimer: TTimer;
     Images: TImageList;
     MainMenu: TMainMenu;
     MenuItemCheckAll: TMenuItem;
@@ -88,6 +96,7 @@ type
     PanelChannels: TPanel;
     PanelFiles: TPanel;
     PopupMenu: TPopupMenu;
+    ProgressBar: TProgressBar;
     ScanDirectoriesandFiles1: TMenuItem;
     Separator1: TToolButton;
     Separator2: TToolButton;
@@ -101,6 +110,9 @@ type
     ToolButtonScanFiles: TToolButton;
     TreeChannels: TVirtualStringTree;
     TreeFileList: TVirtualStringTree;
+    N8: TMenuItem;
+    MenuItemClearAll: TMenuItem;
+    ActionClearAll: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -118,7 +130,6 @@ type
     procedure ActionTakeSnapshotExecute(Sender: TObject);
     procedure ActionUpdateExecute(Sender: TObject);
     procedure ActionViewChannelExecute(Sender: TObject);
-    procedure CheckForUpdateTimerTimer(Sender: TObject);
     procedure MenuItemCheckAllClick(Sender: TObject);
     procedure MenuItemCheckNoneClick(Sender: TObject);
     procedure MenuItemUpdateAlphaClick(Sender: TObject);
@@ -162,6 +173,11 @@ type
 
     procedure CollectFileProgressEventHandler(const Directory: string; var SkipScan: Boolean);
 
+    procedure StatusEventHandler(ASender: TObject; const AStatus: TIdStatus;
+      const AStatusText: String);
+    procedure WorkBeginEventHandler(Sender: TObject; AWorkMode: TWorkMode;
+      AWorkCountMax: Int64);
+    procedure WorkEndEventHandler(Sender: TObject; AWorkMode: TWorkMode);
     procedure WorkEventHandler(ASender: TObject; AWorkMode: TWorkMode; AWorkCount: Int64);
     procedure SetCurrentChannel(const Value: string);
   protected
@@ -186,7 +202,8 @@ implementation
 {$R *.dfm}
 
 uses
-  WinApi.ShellApi, IdHTTP, IdFtp, dwsUtils, dwsXPlatform, dwsJSON,
+  WinApi.ShellApi, Winapi.CommCtrl,
+  IdHTTP, IdFtp, dwsUtils, dwsXPlatform, dwsJSON,
   WebUpdate.GUI.Options, WebUpdate.GUI.About, WebUpdate.GUI.CommandLine,
   WebUpdate.JSON.Serializer, WebUpdate.MD5;
 
@@ -235,9 +252,36 @@ begin
 end;
 
 
+{ TCheckUpdateThread }
+
+constructor TCheckUpdateThread.Create(WebUpdate: TWebUpdate);
+begin
+  FWebUpdate := WebUpdate;
+  FreeOnTerminate := True;
+  inherited Create;
+end;
+
+procedure TCheckUpdateThread.Execute;
+begin
+  FWebUpdate.GetChannelsInformationFromServer;
+  if FWebUpdate.CheckForUpdate then
+    if MessageDlg('A new update is available!' + #13#10#13#10 +
+      'Update now?', mtInformation, [mbYes, mbNo], 0) = mrYes then
+      Synchronize(Update);
+end;
+
+procedure TCheckUpdateThread.Update;
+begin
+  FWebUpdate.PerformUpdate;
+end;
+
+
 { TFormWebUpdateTool }
 
 procedure TFormWebUpdateTool.FormCreate(Sender: TObject);
+var
+  ProgressBarStyle: Integer;
+  PanelRect: TRect;
 begin
   // specify node data sizes
   TreeChannels.NodeDataSize := SizeOf(TChannelItem);
@@ -252,6 +296,15 @@ begin
 
   // create channels
   FChannels := TWebUpdateChannels.Create;
+
+  ProgressBar.Parent := StatusBar;
+  SendMessage(StatusBar.Handle, SB_GETRECT, 0, Integer(@PanelRect));
+  with PanelRect do
+    ProgressBar.SetBounds(Left, Top, Right - Left, Bottom - Top);
+
+  ProgressBarStyle := GetWindowLong(ProgressBar.Handle, GWL_EXSTYLE);
+  ProgressBarStyle := ProgressBarStyle - WS_EX_STATICEDGE;
+  SetWindowLong(ProgressBar.Handle, GWL_EXSTYLE, ProgressBarStyle);
 end;
 
 procedure TFormWebUpdateTool.FormDestroy(Sender: TObject);
@@ -294,7 +347,7 @@ begin
   FWebUpdate := TWebUpdate.Create;
   FWebUpdate.BaseURL := CBaseURL;
   FWebUpdate.GetLocalChannelInformation;
-  CheckForUpdateTimer.Enabled := True;
+  TCheckUpdateThread.Create(FWebUpdate);
 end;
 
 procedure TFormWebUpdateTool.FormClose(Sender: TObject;
@@ -1210,6 +1263,9 @@ begin
   with TIdFTP.Create(nil) do
   try
     OnWork := WorkEventHandler;
+    OnWorkBegin := WorkBeginEventHandler;
+    OnWorkEnd := WorkEndEventHandler;
+    OnStatus := StatusEventHandler;
     Host := Project.FTP.Server;
     Username := Project.FTP.Username;
     Password := Project.FTP.Password;
@@ -1234,7 +1290,11 @@ begin
           RealFileName := Project.BasePath + StringReplace(
             FileItem.FileName, '/', '\', [rfReplaceAll]);
           Put(RealFileName, ChannelName + '/' + FileItem.FileName);
-          SetModTime(RealFileName, FileItem.Modified);
+
+          // now try to update time stamp
+          try
+            SetModTime(ChannelName + '/' + FileItem.FileName, FileItem.Modified);
+          except end;
         end;
       finally
         ChannelSetup.Free;
@@ -1244,7 +1304,9 @@ begin
 
       // upload channel setup
       Put(ChannelFileName, ChannelWebName);
-      SetModTime(ChannelFileName, NodeData^.Modified);
+      try
+        SetModTime(ChannelWebName, NodeData^.Modified);
+      except end;
 
       WriteStatus('Uploading channels list...');
 
@@ -1260,39 +1322,39 @@ begin
   end;
 end;
 
-procedure TFormWebUpdateTool.ClearStatus;
+procedure TFormWebUpdateTool.StatusEventHandler(ASender: TObject; const AStatus: TIdStatus;
+  const AStatusText: String);
 begin
-  StatusBar.Panels[0].Text := '';
+  StatusBar.Panels[1].Text := AStatusText;
+end;
+
+procedure TFormWebUpdateTool.WorkBeginEventHandler(Sender: TObject; AWorkMode: TWorkMode;
+  AWorkCountMax: Int64);
+begin
+  ProgressBar.Max := AWorkCountMax;
+end;
+
+procedure TFormWebUpdateTool.WorkEndEventHandler(Sender: TObject; AWorkMode: TWorkMode);
+begin
+  ProgressBar.Position := 0;
 end;
 
 procedure TFormWebUpdateTool.WorkEventHandler(ASender: TObject;
   AWorkMode: TWorkMode; AWorkCount: Int64);
 begin
+  ProgressBar.Position := AWorkCount;
+  Application.ProcessMessages;
+end;
 
-(*
-  Encoding := TIdFTP(ASender).Response.TransferEncoding;
-  ContentLength := TIdFTP(ASender).Response.ContentLength;
-
-  if (Pos('chunked', LowerCase(Encoding)) = 0) and (ContentLength > 0) then
-  begin
-    Synchronize(procedure
-    begin
-      FOnProgress(Self, 100 * AWorkCount div ContentLength, AWorkCount - FLastWorkCount);
-    end);
-  end;
-*)
+procedure TFormWebUpdateTool.ClearStatus;
+begin
+  StatusBar.Panels[1].Text := '';
 end;
 
 procedure TFormWebUpdateTool.WriteStatus(Text: string);
 begin
-  StatusBar.Panels[0].Text := Text;
+  StatusBar.Panels[1].Text := Text;
   Application.ProcessMessages;
-end;
-
-procedure TFormWebUpdateTool.CheckForUpdateTimerTimer(Sender: TObject);
-begin
-  CheckForUpdateTimer.Enabled := False;
-  ActionCheckUpdateExecute(Sender);
 end;
 
 end.

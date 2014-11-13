@@ -42,7 +42,8 @@ type
 implementation
 
 uses
-  System.StrUtils, WinApi.ShellApi, WinApi.Windows, Vcl.Forms, IdHTTP;
+  System.StrUtils, WinApi.ShellApi, WinApi.Windows, Vcl.Forms,
+  IdSSLOpenSSL, IdHTTP;
 
 { TWebUpdate }
 
@@ -81,6 +82,11 @@ begin
   begin
     Http := TIdHTTP.Create(nil);
     try
+      // eventually create SSL IO handler
+      if FileExists(ExtractFilePath(ParamStr(0)) + 'ssleay32.dll') and
+        FileExists(ExtractFilePath(ParamStr(0)) + 'libeay32.dll') then
+        Http.IOHandler := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
+
       try
         // get text from URI
         Text := Http.Get(FBaseURL + FUpdaterFileName);
@@ -95,6 +101,7 @@ begin
       if not Success then
         Exit;
     finally
+      Http.IOHandler.Free;
       Http.Free;
     end;
   end
@@ -113,6 +120,11 @@ begin
   begin
     Http := TIdHTTP.Create(nil);
     try
+      // eventually create SSL IO handler
+      if FileExists(ExtractFilePath(ParamStr(0)) + 'ssleay32.dll') and
+        FileExists(ExtractFilePath(ParamStr(0)) + 'libeay32.dll') then
+        Http.IOHandler := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
+
       try
         // get text from URI
         Text := Http.Get(FBaseURL + FChannelsFile);
@@ -127,6 +139,7 @@ begin
       if not Success then
         Exit;
     finally
+      Http.IOHandler.Free;
       Http.Free;
     end;
   end
