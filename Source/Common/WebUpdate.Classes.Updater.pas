@@ -146,7 +146,7 @@ type
 implementation
 
 uses
-  dwsUtils, IdSSLOpenSSL, WebUpdate.MD5;
+  dwsUtils, IdSSLOpenSSL, WebUpdate.Tools;
 
 { TFileItem }
 
@@ -172,7 +172,7 @@ end;
 
 procedure TFileItem.UpdateLocalFileName;
 begin
-  FLocalFileName := StringReplace(FFileName, '/', '\', [rfReplaceAll]);
+  FLocalFileName := WebToLocalFileName(FFileName);
 end;
 
 
@@ -592,7 +592,7 @@ begin
   if FNewSetup.AppName <> '' then
   begin
     // get application name
-    Result := StringReplace(FNewSetup.AppName, '/', '\', [rfReplaceAll]);
+    Result := WebToLocalFileName(FNewSetup.AppName);
 
     // now add local path information
     Result := ExtractFilePath(FLocalChannelFileName) + Result;

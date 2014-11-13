@@ -16,7 +16,7 @@ uses
   WebUpdate.JSON.Serializer in '..\Common\WebUpdate.JSON.Serializer.pas',
   WebUpdate.JSON.Channel in '..\Common\WebUpdate.JSON.Channel.pas',
   WebUpdate.JSON.Channels in '..\Common\WebUpdate.JSON.Channels.pas',
-  WebUpdate.MD5 in '..\Common\WebUpdate.MD5.pas';
+  WebUpdate.Tools in '..\Common\WebUpdate.Tools.pas';
 
 resourcestring
   RStrMD5MismatchUpdate = 'Error: MD5 mismatch, update might be corrupt!';

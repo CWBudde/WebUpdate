@@ -25,6 +25,8 @@ type
     constructor Create;
     class function GetID: string; override;
 
+    function GetItemForChannel(ChannelName: string): TWebUpdateChannelItem;
+
     property Items: TWebUpdateChannelItems read FItems;
   end;
 
@@ -41,6 +43,17 @@ end;
 class function TWebUpdateChannels.GetID: string;
 begin
   Result := 'Channels';
+end;
+
+function TWebUpdateChannels.GetItemForChannel(
+  ChannelName: string): TWebUpdateChannelItem;
+var
+  Index: Integer;
+begin
+  Result := nil;
+  for Index := 0 to FItems.Count - 1 do
+    if SameText(FItems[Index].Name, ChannelName) then
+      Exit(FItems[Index]);
 end;
 
 procedure TWebUpdateChannels.Read(Root: TdwsJSONObject);

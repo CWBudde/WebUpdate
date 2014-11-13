@@ -89,7 +89,7 @@
 			<DCCReference Include="..\Common\WebUpdate.JSON.Serializer.pas"/>
 			<DCCReference Include="..\Common\WebUpdate.JSON.Channel.pas"/>
 			<DCCReference Include="..\Common\WebUpdate.JSON.Channels.pas"/>
-			<DCCReference Include="..\Common\WebUpdate.MD5.pas"/>
+			<DCCReference Include="..\Common\WebUpdate.Tools.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

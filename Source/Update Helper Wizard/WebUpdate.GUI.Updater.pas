@@ -82,7 +82,7 @@ implementation
 {$R *.dfm}
 
 uses
-  System.StrUtils, WinAPI.ShellAPI, WinAPI.TlHelp32, dwsUtils, WebUpdate.MD5;
+  System.StrUtils, WinAPI.ShellAPI, WinAPI.TlHelp32, dwsUtils;
 
 resourcestring
   RStrBaseURL = 'https://raw.githubusercontent.com/CWBudde/WebUpdate/master/Binaries/WebUpdate/';

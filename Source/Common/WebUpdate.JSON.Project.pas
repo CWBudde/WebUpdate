@@ -39,6 +39,7 @@ type
     end;
 
   private
+    FApplicationName: string;
     FAutoCopyUpload: Boolean;
     FBaseDirectory: string;
     FChannelsFilename: TFileName;
@@ -59,12 +60,13 @@ type
     class function GetID: string; override;
 
     property AutoCopyUpload: Boolean read FAutoCopyUpload write FAutoCopyUpload;
+    property ApplicationName: string read FApplicationName write FApplicationName;
     property BaseDirectory: string read FBaseDirectory write FBaseDirectory;
     property BasePath: string read GetBasePath;
     property ChannelsFilename: TFileName read FChannelsFilename write FChannelsFilename;
     property ChannelsPath: string read GetChannelsPath;
     property Copy: TCopyOptions read FCopyOptions;
-    property CurrentChannel: string read FCurrentChannel write FCurrentChannel;
+    property ChannelName: string read FCurrentChannel write FCurrentChannel;
     property FullChannelsFilename: TFileName read GetFullChannelsFilename;
     property FTP: TFTPOptions read FFtpOptions;
     property UseMD5: Boolean read FUseMD5 write FUseMD5;
@@ -214,6 +216,10 @@ begin
   if Assigned(Value) then
     FAutoCopyUpload := Value.AsBoolean;
 
+  Value := Root.Items['ApplicationName'];
+  if Assigned(Value) then
+    FApplicationName := Value.AsString;
+
   Value := Root.Items['UseMD5'];
   if Assigned(Value) then
     FUseMD5 := Value.AsBoolean;
@@ -244,6 +250,9 @@ begin
 
   if FAutoCopyUpload = True then
     Root.AddValue('AutoCopyUpload').AsBoolean := FAutoCopyUpload;
+
+  if FApplicationName <> '' then
+    Root.AddValue('ApplicationName').AsString := FApplicationName;
 
   if FUseMD5 = True then
     Root.AddValue('UseMD5').AsBoolean := FUseMD5;

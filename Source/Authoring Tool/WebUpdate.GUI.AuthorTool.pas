@@ -157,7 +157,6 @@ type
     FProject: TWebUpdateProject;
     FPreferences: TWebUpdatePreferences;
     FChannels: TWebUpdateChannels;
-    FCurrentChannel: string;
     FAppName: string;
     FWebUpdate: TWebUpdate;
     FProjectModified: Boolean;
@@ -179,7 +178,8 @@ type
       AWorkCountMax: Int64);
     procedure WorkEndEventHandler(Sender: TObject; AWorkMode: TWorkMode);
     procedure WorkEventHandler(ASender: TObject; AWorkMode: TWorkMode; AWorkCount: Int64);
-    procedure SetCurrentChannel(const Value: string);
+    procedure SetCurrentChannelName(const Value: string);
+    function GetCurrentChannelName: string;
   protected
     procedure SetupDefaultChannels;
     procedure LoadChannels;
@@ -191,7 +191,7 @@ type
     procedure CopySnapshot;
 
     property Project: TWebUpdateProject read FProject;
-    property CurrentChannel: string read FCurrentChannel write SetCurrentChannel;
+    property CurrentChannelName: string read GetCurrentChannelName write SetCurrentChannelName;
   end;
 
 var
@@ -205,7 +205,7 @@ uses
   WinApi.ShellApi, Winapi.CommCtrl,
   IdHTTP, IdFtp, dwsUtils, dwsXPlatform, dwsJSON,
   WebUpdate.GUI.Options, WebUpdate.GUI.About, WebUpdate.GUI.CommandLine,
-  WebUpdate.JSON.Serializer, WebUpdate.MD5;
+  WebUpdate.JSON.Serializer, WebUpdate.Tools;
 
 const
   CBaseURL = 'https://raw.githubusercontent.com/CWBudde/WebUpdate/master/Binaries/WebUpdate/';
@@ -214,43 +214,6 @@ resourcestring
   RStrFileNotFound = 'File %s not found';
   RStrNoFileSelected = 'No file selected for update!';
   RStrSavingChannelSetup = 'Saving channel setup...';
-
-function FileTimeToDateTime(Time: TFileTime): TDateTime;
-
-  function InternalEncodeDateTime(const AYear, AMonth, ADay, AHour, AMinute, ASecond,
-    AMilliSecond: Word): TDateTime;
-  var
-    LTime: TDateTime;
-    Success: Boolean;
-  begin
-    Result := 0;
-    Success := TryEncodeDate(AYear, AMonth, ADay, Result);
-    if Success then
-    begin
-      Success := TryEncodeTime(AHour, AMinute, ASecond, AMilliSecond, LTime);
-      if Success then
-        if Result >= 0 then
-          Result := Result + LTime
-        else
-          Result := Result - LTime
-    end;
-  end;
-
-var
-  LFileTime: TFileTime;
-  SysTime: TSystemTime;
-begin
-  Result := 0;
-  FileTimeToLocalFileTime(Time, LFileTime);
-
-  if FileTimeToSystemTime(LFileTime, SysTime) then
-    with SysTime do
-    begin
-      Result := InternalEncodeDateTime(wYear, wMonth, wDay, wHour, wMinute,
-        wSecond, wMilliseconds);
-    end;
-end;
-
 
 { TCheckUpdateThread }
 
@@ -367,6 +330,11 @@ begin
       mtInformation, [mbYes, mbNo], 0) = mrYes;
 end;
 
+function TFormWebUpdateTool.GetCurrentChannelName: string;
+begin
+  Result := FProject.ChannelName;
+end;
+
 function TFormWebUpdateTool.GetCurrentChannelNodeData: PChannelItem;
 var
   Node: PVirtualNode;
@@ -378,7 +346,7 @@ begin
   for Node in TreeChannels.Nodes do
   begin
     NodeData := TreeChannels.GetNodeData(Node);
-    if SameText(NodeData^.Name, FCurrentChannel) then
+    if SameText(NodeData^.Name, FProject.ChannelName) then
       Exit(TreeChannels.GetNodeData(Node));
   end;
 
@@ -653,7 +621,7 @@ begin
         Node := CreateNode(FileStrings);
         NodeData := TreeFileList.GetNodeData(Node);
         NodeData^.FileName := FileName;
-        NodeData^.WebFileName := StringReplace(WebFileName, '\', '/', [rfReplaceAll]);
+        NodeData^.WebFileName := LocalToWebFileName(WebFileName);
         NodeData^.Caption := FileStrings[High(FileStrings)];
         NodeData^.Hash := SimpleStringHash(NodeData^.Caption);
 
@@ -722,7 +690,7 @@ begin
       EqPos := Pos('=', Text);
 
       if StartsText('Channel:', Text) then
-        CurrentChannel := Copy(Text, EqPos, Length(Text) - EqPos)
+        CurrentChannelName := Copy(Text, EqPos, Length(Text) - EqPos)
       else if StartsText('FtpHost:', Text) then
         Project.FTP.Server := Copy(Text, EqPos, Length(Text) - EqPos)
       else if StartsText('FtpUser:', Text) then
@@ -804,7 +772,7 @@ begin
       NodeData^.Modified := ChannelItem.Modified;
 
       // update check state
-      if SameText(ChannelItem.Name, FProject.CurrentChannel) then
+      if SameText(ChannelItem.Name, FProject.ChannelName) then
         TreeChannels.CheckState[Node] := csCheckedNormal;
     end;
   finally
@@ -848,12 +816,12 @@ begin
   FChannels.SaveToFile(FormWebUpdateTool.Project.FullChannelsFilename);
 end;
 
-procedure TFormWebUpdateTool.SetCurrentChannel(const Value: string);
+procedure TFormWebUpdateTool.SetCurrentChannelName(const Value: string);
 var
   Node: PVirtualNode;
   NodeData: PChannelItem;
 begin
-  if FCurrentChannel <> Value then
+  if FProject.ChannelName <> Value then
   begin
     // check node with name
     for Node in TreeChannels.Nodes do
@@ -865,7 +833,7 @@ begin
         TreeChannels.CheckState[Node] := csUncheckedNormal;
     end;
 
-    FCurrentChannel := Value;
+    FProject.ChannelName := Value;
   end;
 end;
 
@@ -889,7 +857,7 @@ begin
     NodeData^.Modified := 0;
 
     // update check state
-    if SameText(NodeData^.Name, FProject.CurrentChannel) then
+    if SameText(NodeData^.Name, FProject.ChannelName) then
       TreeChannels.CheckState[Node] := csCheckedNormal;
   end;
 end;
@@ -927,7 +895,7 @@ begin
   try
     // store current channel name
     ChannelSetup.AppName := FAppName;
-    ChannelSetup.ChannelName := FCurrentChannel;
+    ChannelSetup.ChannelName := FProject.ChannelName;
     LastModified := 0;
     for Node in TreeFileList.CheckedNodes do
     begin
@@ -1000,7 +968,7 @@ begin
     Exit;
 
   ChannelNodeData := TreeChannels.GetNodeData(Node);
-  FCurrentChannel := ChannelNodeData^.Name;
+  FProject.ChannelName := ChannelNodeData^.Name;
 
   FileName := Project.ChannelsPath + ChannelNodeData^.FileName;
 
@@ -1016,7 +984,7 @@ begin
 
     // store current channel name
     if ChannelSetup.ChannelName <> '' then
-      FCurrentChannel := ChannelSetup.ChannelName;
+      FProject.ChannelName := ChannelSetup.ChannelName;
     FAppName := ChannelSetup.AppName;
 
     TreeFileList.BeginUpdate;
@@ -1025,8 +993,7 @@ begin
       begin
         WebFileName := Item.FileName;
         FileStrings := SplitString(WebFileName, '/');
-        RealFileName := Project.BasePath + StringReplace(WebFileName, '/', '\',
-          [rfReplaceAll]);
+        RealFileName := Project.BasePath + WebToLocalFileName(WebFileName);
 
         if FileExists(RealFileName) then
         begin
@@ -1189,8 +1156,7 @@ begin
     Exit;
 
   ChannelName := NodeData^.Name;
-  ChannelFileName := Project.ChannelsPath + // ChannelName + '\' +
-    NodeData^.FileName;
+  ChannelFileName := Project.ChannelsPath + NodeData^.FileName;
 
   // upload files
   ChannelSetup := TWebUpdateChannelSetup.Create;
@@ -1207,8 +1173,7 @@ begin
     begin
       WriteStatus('Copying file ' + FileItem.FileName + '...');
 
-      RealFileName := Project.BasePath + StringReplace(
-        FileItem.FileName, '/', '\', [rfReplaceAll]);
+      RealFileName := Project.BasePath + WebToLocalFileName(FileItem.FileName);
 
       // copy file
       DestFileName := ExpandFileName(Path + ChannelName + '\' + FileItem.FileName);
@@ -1287,8 +1252,7 @@ begin
           WriteStatus('Uploading: ' + FileItem.FileName);
 
           // upload file
-          RealFileName := Project.BasePath + StringReplace(
-            FileItem.FileName, '/', '\', [rfReplaceAll]);
+          RealFileName := Project.BasePath + WebToLocalFileName(FileItem.FileName);
           Put(RealFileName, ChannelName + '/' + FileItem.FileName);
 
           // now try to update time stamp

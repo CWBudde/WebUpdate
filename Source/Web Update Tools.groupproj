@@ -6,6 +6,9 @@
 			<Projects Include="Authoring Tool\AuthoringTool.dproj">
 				<Dependencies/>
 			</Projects>
+			<Projects Include="Snapshot Tool (Command Line)\SnapshotTool.dproj">
+				<Dependencies/>
+			</Projects>
 			<Projects Include="Update Helper Wizard\UpdaterWizard.dproj">
 				<Dependencies/>
 			</Projects>
@@ -31,6 +34,15 @@
 		</Target>
 		<Target Name="AuthoringTool:Make">
 			<MSBuild Targets="Make" Projects="Authoring Tool\AuthoringTool.dproj"/>
+		</Target>
+		<Target Name="SnapshotTool">
+			<MSBuild Projects="Snapshot Tool (Command Line)\SnapshotTool.dproj"/>
+		</Target>
+		<Target Name="SnapshotTool:Clean">
+			<MSBuild Targets="Clean" Projects="Snapshot Tool (Command Line)\SnapshotTool.dproj"/>
+		</Target>
+		<Target Name="SnapshotTool:Make">
+			<MSBuild Targets="Make" Projects="Snapshot Tool (Command Line)\SnapshotTool.dproj"/>
 		</Target>
 		<Target Name="UpdaterWizard">
 			<MSBuild Projects="Update Helper Wizard\UpdaterWizard.dproj"/>
@@ -60,13 +72,13 @@
 			<MSBuild Targets="Make" Projects="Example Application\ExampleApp.dproj"/>
 		</Target>
 		<Target Name="Build">
-			<CallTarget Targets="AuthoringTool;UpdaterWizard;Updater;ExampleApp"/>
+			<CallTarget Targets="AuthoringTool;SnapshotTool;UpdaterWizard;Updater;ExampleApp"/>
 		</Target>
 		<Target Name="Clean">
-			<CallTarget Targets="AuthoringTool:Clean;UpdaterWizard:Clean;Updater:Clean;ExampleApp:Clean"/>
+			<CallTarget Targets="AuthoringTool:Clean;SnapshotTool:Clean;UpdaterWizard:Clean;Updater:Clean;ExampleApp:Clean"/>
 		</Target>
 		<Target Name="Make">
-			<CallTarget Targets="AuthoringTool:Make;UpdaterWizard:Make;Updater:Make;ExampleApp:Make"/>
+			<CallTarget Targets="AuthoringTool:Make;SnapshotTool:Make;UpdaterWizard:Make;Updater:Make;ExampleApp:Make"/>
 		</Target>
 		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" Project="$(BDS)\Bin\CodeGear.Group.Targets"/>
 	</Project>
