@@ -1,0 +1,9 @@
+{
+	"ID" : "Project",
+	"ChannelFilename" : "WebUpdate\\Channels.json",
+	"CurrentChannel" : "Nightly",
+	"Copy" : {
+		"Path" : ".\\Snapshots",
+		"Enabled" : true
+	}
+}

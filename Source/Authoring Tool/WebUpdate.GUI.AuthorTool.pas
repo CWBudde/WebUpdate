@@ -42,6 +42,7 @@ type
   TFormWebUpdateTool = class(TForm)
     ActionAddChannel: TAction;
     ActionCheckUpdate: TAction;
+    ActionClearAll: TAction;
     ActionCommandLine: TAction;
     ActionCopyUpload: TAction;
     ActionDeleteChannel: TAction;
@@ -62,6 +63,7 @@ type
     MenuItemCheckAll: TMenuItem;
     MenuItemCheckForUpdates: TMenuItem;
     MenuItemCheckNone: TMenuItem;
+    MenuItemClearAll: TMenuItem;
     MenuItemExit: TMenuItem;
     MenuItemFile: TMenuItem;
     MenuItemFileOpen: TMenuItem;
@@ -93,6 +95,7 @@ type
     N5: TMenuItem;
     N6: TMenuItem;
     N7: TMenuItem;
+    N8: TMenuItem;
     PanelChannels: TPanel;
     PanelFiles: TPanel;
     PopupMenu: TPopupMenu;
@@ -110,9 +113,6 @@ type
     ToolButtonScanFiles: TToolButton;
     TreeChannels: TVirtualStringTree;
     TreeFileList: TVirtualStringTree;
-    N8: TMenuItem;
-    MenuItemClearAll: TMenuItem;
-    ActionClearAll: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -153,6 +153,7 @@ type
       Node2: PVirtualNode; Column: TColumnIndex; var Result: Integer);
     procedure ActionHelpAboutExecute(Sender: TObject);
     procedure ActionCommandLineExecute(Sender: TObject);
+    procedure ActionDocumentationExecute(Sender: TObject);
   private
     FProject: TWebUpdateProject;
     FPreferences: TWebUpdatePreferences;
@@ -374,6 +375,12 @@ begin
     TreeChannels.DeleteNode(TreeChannels.FocusedNode);
 end;
 
+procedure TFormWebUpdateTool.ActionDocumentationExecute(Sender: TObject);
+begin
+  ShellExecute(Application.Handle, 'open', PChar(ExtractFilePath(ParamStr(0)) +
+    'Documentation.pdf'), nil, PChar(ExtractFilePath(ParamStr(0))), SW_SHOW);
+end;
+
 procedure TFormWebUpdateTool.ActionCommandLineExecute(Sender: TObject);
 begin
   with TFormCommandLine.Create(Self) do
@@ -582,7 +589,7 @@ begin
   FWebUpdate.ChannelName := 'Stable';
 end;
 
-function TFormWebUpdateTool.CreateNode(FileStrings: TStringDynArray): PVirtualNode;
+function TFormWebUpdateTool.CreateNode(FileStrings: System.Types.TStringDynArray): PVirtualNode;
 var
   Level: Integer;
 begin
@@ -594,7 +601,7 @@ end;
 procedure TFormWebUpdateTool.ScanDirectory;
 var
   BaseDirectory: string;
-  FileStrings: TStringDynArray;
+  FileStrings: System.Types.TStringDynArray;
   FileList: TStringList;
   FileName: TFileName;
   WebFileName: string;
@@ -957,7 +964,7 @@ procedure TFormWebUpdateTool.TreeChannelsChecked(Sender: TBaseVirtualTree;
   Node: PVirtualNode);
 var
   NewNode: PVirtualNode;
-  FileStrings: TStringDynArray;
+  FileStrings: System.Types.TStringDynArray;
   FileName, WebFileName, RealFileName: string;
   Item: TWebUpdateFileItem;
   ChannelSetup: TWebUpdateChannelSetup;

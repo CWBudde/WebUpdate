@@ -423,6 +423,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
       Category = 'Help'
       Caption = '&Documentation'
       ImageIndex = 14
+      OnExecute = ActionDocumentationExecute
     end
     object ActionClearAll: TAction
       Category = 'Project'
