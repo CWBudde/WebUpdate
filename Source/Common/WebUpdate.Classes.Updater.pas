@@ -649,7 +649,7 @@ begin
     // handle errors
     if not Success then
       raise EHttpDownload.CreateFmt('Error downloading from URL %s',
-        [BaseURL + ChannelsFileName]);
+        [ChannelBasePath + FileName]);
   finally
     Http.IOHandler.Free;
     Http.Free;

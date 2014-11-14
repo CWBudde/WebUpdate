@@ -586,10 +586,10 @@ object FormWebUpdate: TFormWebUpdate
       Margins.Right = 4
       Margins.Bottom = 4
       Align = alRight
-      Caption = '&Start >'
+      Caption = '&Next >'
       Default = True
       TabOrder = 1
-      OnClick = ButtonStartClick
+      OnClick = ButtonNextClick
     end
   end
   object ImageList: TImageList

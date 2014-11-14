@@ -85,7 +85,7 @@ uses
   System.StrUtils, WinAPI.ShellAPI, WinAPI.TlHelp32, dwsUtils;
 
 resourcestring
-  RStrBaseURL = 'https://raw.githubusercontent.com/CWBudde/WebUpdate/master/Binaries/WebUpdate/';
+  RStrBaseURL = 'https://raw.githubusercontent.com/CWBudde/WebUpdate/master/Binaries/Snapshots/';
 
 resourcestring
   RStrMD5MismatchUpdate = 'MD5 mismatch, update might be corrupt!';
@@ -340,6 +340,7 @@ begin
   begin
     ChannelNames := TStringList.Create;
     try
+      ComboBoxChannels.Clear;
       FWebUpdater.GetChannelNames(ChannelNames);
       for Index := 0 to ChannelNames.Count - 1 do
         if not SameText(ChannelNames[Index], 'Stable') then
