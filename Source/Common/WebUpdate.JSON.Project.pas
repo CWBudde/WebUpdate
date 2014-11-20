@@ -170,7 +170,10 @@ end;
 
 function TWebUpdateProject.GetBasePath: string;
 begin
-  Result := IncludeTrailingPathDelimiter(FBaseDirectory);
+  if FBaseDirectory = '' then
+    Exit('');
+
+  Result := IncludeTrailingPathDelimiter(FBaseDirectory)
 end;
 
 function TWebUpdateProject.GetChannelsPath: string;
@@ -180,8 +183,8 @@ end;
 
 function TWebUpdateProject.GetFullChannelsFilename: TFileName;
 begin
-  if (FBaseDirectory <> '') then
-    if FChannelsFilename <> '' then
+  if FChannelsFilename <> '' then
+    if FBaseDirectory <> '' then
       Result := IncludeTrailingPathDelimiter(FBaseDirectory) + FChannelsFilename
     else
       Result := FChannelsFilename

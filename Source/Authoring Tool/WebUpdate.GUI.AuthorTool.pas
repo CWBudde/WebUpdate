@@ -632,7 +632,13 @@ var
   BasePath: string;
   Fad: TWin32FileAttributeData;
 begin
+  // get base directory (eventually expanding relative paths)
   BaseDirectory := Project.BaseDirectory;
+  if IsRelativePath(BaseDirectory) then
+    BaseDirectory := ExtractFilePath(ParamStr(0)) + BaseDirectory
+  else if BaseDirectory = '' then
+    BaseDirectory := ExtractFileDir(ParamStr(0));
+
   TreeFileList.BeginUpdate;
   try
     FileList := TStringList.Create;
@@ -780,9 +786,15 @@ var
   Node: PVirtualNode;
   NodeData: PChannelItem;
   ChannelItem: TWebUpdateChannelItem;
+  FileName: string;
 begin
+  // get channels file name
+  FileName := Project.FullChannelsFilename;
+  if IsRelativePath(FileName) then
+    FileName := ExtractFilePath(ParamStr(0)) + FileName;
+
   // load channels from file
-  FChannels.LoadFromFile(Project.FullChannelsFilename);
+  FChannels.LoadFromFile(FileName);
 
   // clear channel tree
   TreeChannels.Clear;
@@ -1032,6 +1044,10 @@ begin
         WebFileName := Item.FileName;
         FileStrings := SplitString(WebFileName, '/');
         RealFileName := Project.BasePath + WebToLocalFileName(WebFileName);
+
+        // eventually fix relative path
+        if IsRelativePath(RealFileName) then
+          RealFileName := ExtractFilePath(ParamStr(0)) + RealFileName;
 
         if FileExists(RealFileName) then
         begin
