@@ -1259,7 +1259,7 @@ begin
 
   // copy channel setup
   WriteStatus('Copying channel setup...');
-  DestFileName := ExpandFileName(Path + ChannelPath + NodeData^.FileName);
+  DestFileName := ExpandFileName(Path + NodeData^.FileName);
   ForceDirectories(ExtractFileDir(DestFileName));
   CopyFile(PChar(ChannelFileName), PChar(DestFileName), False);
 
