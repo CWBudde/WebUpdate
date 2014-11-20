@@ -6,7 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
   Vcl.ComCtrls, Vcl.ExtCtrls, Vcl.ImgList, VirtualTrees,
-  WebUpdate.JSON.Channels, WebUpdate.JSON.Channel, WebUpdate.Classes.Updater;
+  WebUpdate.Classes.Updater;
 
 type
   TNodeFileItem = record
@@ -26,6 +26,7 @@ type
     LabelHeader: TLabel;
     LabelRemainingTime: TLabel;
     LabelSelectChannel: TLabel;
+    LabelSpeed: TLabel;
     LabelSummary: TLabel;
     LabelTotalStatus: TLabel;
     PageControl: TPageControl;
@@ -64,7 +65,8 @@ type
     FDelay: Integer;
     FVerbose: Boolean;
 
-    procedure ProgressEventHandler(Sender: TObject; Progress: Integer; ByteCount: Integer);
+    procedure ProgressEventHandler(Sender: TObject; Progress: Integer;
+      ByteCount: Integer; KBPS: Single; RemainingTime: TDateTime);
     procedure FileNameProgressEventHandler(Sender: TObject; const FileName: TFileName);
     procedure WebUpdateCompleteEventHandler(Sender: TObject);
     procedure MD5MismatchHandler(Sender: TObject; const FileName: TFileName; var Ignore: Boolean);
@@ -174,7 +176,6 @@ begin
 
   FMainAppWindowCaption := '';
   FMainAppExecutable := '';
-  FVerbose := False;
 
   // create WebUpdater
   FWebUpdater := TWebUpdater.Create;
@@ -250,10 +251,15 @@ begin
 end;
 
 procedure TFormWebUpdate.ProgressEventHandler(Sender: TObject;
-  Progress: Integer; ByteCount: Integer);
+  Progress: Integer; ByteCount: Integer; KBPS: Single; RemainingTime: TDateTime);
 begin
   ProgressBarCurrent.Position := Progress;
   ProgressBarTotal.Position := ProgressBarTotal.Position + ByteCount;
+
+  LabelRemainingTime.Caption := 'Time remaining: ' + TimeToStr(RemainingTime);
+  LabelRemainingTime.Visible := True;
+  LabelSpeed.Caption := 'Speed: ' + IntToStr(Round(KBPS)) + ' kb/s';
+  LabelSpeed.Visible := True;
 end;
 
 procedure TFormWebUpdate.WebUpdateCompleteEventHandler(Sender: TObject);
@@ -290,6 +296,7 @@ var
   EqPos: Integer;
   ChannelNames: TStringList;
 begin
+  FVerbose := False;
   FCommandLine := ParamCount >= 1;
 
   for Index := 1 to ParamCount do
@@ -338,6 +345,7 @@ begin
   end
   else
   begin
+    FVerbose := True;
     ChannelNames := TStringList.Create;
     try
       ComboBoxChannels.Clear;

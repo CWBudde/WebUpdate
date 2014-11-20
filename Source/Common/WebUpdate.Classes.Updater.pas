@@ -42,7 +42,8 @@ type
 
   TUpdaterThread = class(TThread)
   type
-    TProgressEvent = procedure (Sender: TObject; Progress: Integer; ByteCount: Integer) of object;
+    TProgressEvent = procedure (Sender: TObject; Progress: Integer;
+      ByteCount: Integer; KBPS: Single; ProgressTime: TDateTime) of object;
     TFileNameProgressEvent = procedure (Sender: TObject; const FileName: TFileName) of object;
     TMD5MismatchEvent = procedure (Sender: TObject; const FileName: TFileName; var Ignore: Boolean) of object;
     TScriptErrorsEvent = procedure (Sender: TObject; const MessageList: TdwsMessageList) of object;
@@ -53,7 +54,10 @@ type
     FBasePath: string;
     FPostScript: string;
     FPreScript: string;
+    FStartTimeStamp: TDateTime;
+    FLastTimeStamp: TDateTime;
     FLastWorkCount: Integer;
+
     FOnFileNameProgress: TFileNameProgressEvent;
     FOnProgress: TProgressEvent;
     FOnDone: TNotifyEvent;
@@ -91,6 +95,8 @@ type
     FThread: TUpdaterThread;
     FFileItemListCache: TFileItemList;
     FTotalSize: Int64;
+    FCurrentSize: Int64;
+    FDownloadSpeedAverage: Single;
 
     FOnFileNameProgress: TUpdaterThread.TFileNameProgressEvent;
     FOnScriptErrors: TUpdaterThread.TScriptErrorsEvent;
@@ -98,17 +104,18 @@ type
     FOnMD5Mismatch: TUpdaterThread.TMD5MismatchEvent;
     FOnProgress: TUpdaterThread.TProgressEvent;
 
-    function GetChannelBasePath: string;
     function GetFileItemList: TFileItemList;
+    function GetLocalChannelFileName: TFileName;
     function GetMainAppFileName: TFileName;
-    procedure SetChannelName(const Value: string);
+    function GetTotalSize: Int64;
     procedure SetBaseURL(Value: string);
+    procedure SetChannelName(const Value: string);
     procedure SetChannelsFileName(const Value: TFileName);
     procedure SetLocalChannelFileName(const Value: TFileName);
-    function GetTotalSize: Int64;
   protected
     procedure MD5MismatchHandler(Sender: TObject; const FileName: TFileName; var Ignore: Boolean);
-    procedure ProgressEventHandler(Sender: TObject; Progress: Integer; ByteCount: Integer);
+    procedure ProgressEventHandler(Sender: TObject; Progress: Integer;
+      ByteCount: Integer; KBPS: Single; PassedTime: TDateTime);
     procedure FileChangedEventHandler(Sender: TObject; const FileName: TFileName);
     procedure ScriptErrorsEventHandler(Sender: TObject; const MessageList: TdwsMessageList);
     procedure DoneEventHandler(Sender: TObject);
@@ -117,8 +124,6 @@ type
     procedure ResetFileListCache;
     procedure LoadSetupFromFile(const FileName: TFileName);
     procedure LoadChannels;
-
-    property ChannelBasePath: string read GetChannelBasePath;
   public
     constructor Create;
     destructor Destroy; override;
@@ -131,7 +136,7 @@ type
     property ChannelName: string read FChannelName write SetChannelName;
     property Channels: TWebUpdateChannels read FChannels;
     property ChannelsFileName: TFileName read FChannelsFileName write SetChannelsFileName;
-    property LocalChannelFileName: TFileName read FLocalChannelFileName write SetLocalChannelFileName;
+    property LocalChannelFileName: TFileName read GetLocalChannelFileName write SetLocalChannelFileName;
     property MainAppFileName: TFileName read GetMainAppFileName;
     property FileItemList: TFileItemList read GetFileItemList;
     property TotalBytes: Int64 read GetTotalSize;
@@ -223,8 +228,13 @@ begin
   if (Pos('chunked', LowerCase(Encoding)) = 0) and (ContentLength > 0) then
   begin
     Synchronize(procedure
+    var
+      KBPS: Single;
     begin
-      FOnProgress(Self, 100 * AWorkCount div ContentLength, AWorkCount - FLastWorkCount);
+      KBPS := 0.001 * (AWorkCount - FLastWorkCount) / (86400 * (Now - FLastTimeStamp));
+      FLastTimeStamp := Now;
+      FOnProgress(Self, 100 * AWorkCount div ContentLength,
+        AWorkCount - FLastWorkCount, KBPS, Now - FStartTimeStamp);
     end);
     FLastWorkCount := AWorkCount;
   end;
@@ -263,6 +273,7 @@ begin
   if FPreScript <> '' then
     RunScript(FPreScript);
 
+  FStartTimeStamp := Now;
   FHttp := TIdHTTP.Create(nil);
   try
     // eventually create SSL IO handler
@@ -292,6 +303,7 @@ begin
         // clear buffer / reset last work count
         MS.Clear;
         FLastWorkCount := 0;
+        FLastTimeStamp := Now;
 
         // check if terminated
         if Terminated then
@@ -363,6 +375,43 @@ end;
 
 
 { TWebUpdater }
+
+constructor TWebUpdater.Create;
+begin
+  FChannels := TWebUpdateChannels.Create;
+  FNewSetup := TWebUpdateChannelSetup.Create;
+
+  // specify default values
+  FBaseURL := '';
+  FCurrentSize := 0;
+  FDownloadSpeedAverage := 0;
+  FChannelsFileName := 'Channels.json';
+  FLocalChannelFileName := 'WebUpdate.json';
+end;
+
+destructor TWebUpdater.Destroy;
+begin
+  // eventually terminate file download thread
+  if Assigned(FThread) then
+    FThread.Terminate;
+
+  // free objects
+  FFileItemListCache.Free;
+  FChannels.Free;
+  FNewSetup.Free;
+  if Assigned(FThread) then
+    FThread.WaitFor;
+  FThread.Free;
+
+  inherited;
+end;
+
+procedure TWebUpdater.Abort;
+begin
+  if Assigned(FThread) then
+    FThread.Terminate;
+  ResetFileListCache;
+end;
 
 procedure TWebUpdater.BuildFileListCache;
 var
@@ -457,41 +506,6 @@ begin
   end;
 end;
 
-constructor TWebUpdater.Create;
-begin
-  FChannels := TWebUpdateChannels.Create;
-  FNewSetup := TWebUpdateChannelSetup.Create;
-
-  // specify default values
-  FBaseURL := '';
-  FChannelsFileName := 'Channels.json';
-  FLocalChannelFileName := ExtractFilePath(ParamStr(0)) + 'WebUpdate.json';
-end;
-
-destructor TWebUpdater.Destroy;
-begin
-  // eventually terminate file download thread
-  if Assigned(FThread) then
-    FThread.Terminate;
-
-  // free objects
-  FFileItemListCache.Free;
-  FChannels.Free;
-  FNewSetup.Free;
-  if Assigned(FThread) then
-    FThread.WaitFor;
-  FThread.Free;
-
-  inherited;
-end;
-
-procedure TWebUpdater.Abort;
-begin
-  if Assigned(FThread) then
-    FThread.Terminate;
-  ResetFileListCache;
-end;
-
 procedure TWebUpdater.DoneEventHandler(Sender: TObject);
 begin
   // save new setup
@@ -557,11 +571,6 @@ begin
   end;
 end;
 
-function TWebUpdater.GetChannelBasePath: string;
-begin
-  Result :=FBaseURL + ChannelName + '/';
-end;
-
 procedure TWebUpdater.GetChannelNames(const ChannelNames: TStringList);
 var
   Item: TWebUpdateChannelItem;
@@ -586,6 +595,13 @@ begin
   Result := FFileItemListCache;
 end;
 
+function TWebUpdater.GetLocalChannelFileName: TFileName;
+begin
+  Result := FLocalChannelFileName;
+  if IsRelativePath(Result) then
+    Result := ExtractFilePath(ParamStr(0)) + Result;
+end;
+
 function TWebUpdater.GetMainAppFileName: TFileName;
 begin
   Result := '';
@@ -607,6 +623,14 @@ end;
 
 procedure TWebUpdater.PerformWebUpdate;
 begin
+  // eventually kill thread
+  if Assigned(FThread) then
+  begin
+    FThread.Terminate;
+    FThread.WaitFor;
+    FThread.Free;
+  end;
+
   FThread := TUpdaterThread.Create(FileItemList);
 
   // specify event handlers
@@ -617,8 +641,15 @@ begin
   FThread.OnMD5Mismatch := MD5MismatchHandler;
 
   // specify paths
-  FThread.BasePath := ChannelBasePath;
+  FThread.BasePath := FBaseURL;
   FThread.LocalPath := ExtractFilePath(FLocalChannelFileName);
+
+  // specify scripts
+  if Assigned(FNewSetup) then
+  begin
+    FThread.PreScript := FNewSetup.PreUpdateScript;
+    FThread.PostScript := FNewSetup.PostUpdateScript;
+  end;
 
   FThread.Suspended := False;
 end;
@@ -638,7 +669,7 @@ begin
         Http.IOHandler := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
 
       // get text from URI
-      Text := Http.Get(ChannelBasePath + FileName);
+      Text := Http.Get(FBaseURL + FileName);
 
       // check if text is available (might need check for JSON format)
       Success := Text <> '';
@@ -649,7 +680,7 @@ begin
     // handle errors
     if not Success then
       raise EHttpDownload.CreateFmt('Error downloading from URL %s',
-        [ChannelBasePath + FileName]);
+        [FBaseURL + FileName]);
   finally
     Http.IOHandler.Free;
     Http.Free;
@@ -668,11 +699,23 @@ begin
 end;
 
 procedure TWebUpdater.ProgressEventHandler(Sender: TObject; Progress,
-  ByteCount: Integer);
+  ByteCount: Integer; KBPS: Single; PassedTime: TDateTime);
+var
+  TotalTime: TDateTime;
 begin
+  FCurrentSize := FCurrentSize + ByteCount;
+  TotalTime := PassedTime * FTotalSize / FCurrentSize;
+
+  // average download speed
+  if FDownloadSpeedAverage = 0 then
+    FDownloadSpeedAverage := KBPS
+  else
+    FDownloadSpeedAverage := 0.5 * (FDownloadSpeedAverage + KBPS);
+
   // event redirection
   if Assigned(OnProgress) then
-    OnProgress(Sender, Progress, ByteCount);
+    OnProgress(Sender, Progress, ByteCount, FDownloadSpeedAverage,
+      TotalTime - PassedTime);
 end;
 
 procedure TWebUpdater.ResetFileListCache;

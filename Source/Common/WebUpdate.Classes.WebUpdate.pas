@@ -16,6 +16,7 @@ type
     FChannelsFile: TFileName;
     FDownloadUpdater: Boolean;
     FLastModified: TDateTime;
+    FLocalFileName: TFileName;
     FUpdaterFileName: TFileName;
     procedure SetChannelName(const Value: string);
   public
@@ -34,6 +35,7 @@ type
     property BaseURL: string read FBaseURL write FBaseURL;
     property ChannelName: string read FChannelName write SetChannelName;
     property ChannelsFileName: TFileName read FChannelsFile write FChannelsFile;
+    property LocalChannelFileName: TFileName read FLocalFileName write FLocalFileName;
     property LastModified: TDateTime read FLastModified;
     property DownloadUpdater: Boolean read FDownloadUpdater write FDownloadUpdater;
     property UpdaterFileName: TFileName read FUpdaterFileName write FUpdaterFileName;
@@ -54,6 +56,7 @@ begin
   FChannelsFile := 'Channels.json';
   FChannelName := 'Stable';
   FChannels := TWebUpdateChannels.Create;
+  FLocalFileName := 'WebUpdate.json';
   FUpdaterFileName := 'UpdaterWizard.exe';
 end;
 
@@ -168,12 +171,12 @@ var
 begin
   // check if a local file is present otherwise exit
   LocalPath := ExtractFilePath(ParamStr(0));
-  if not FileExists(LocalPath + 'WebUpdate.json') then
+  if not FileExists(LocalPath + FLocalFileName) then
     Exit;
 
   LocalSetup := TWebUpdateChannelSetup.Create;
   try
-    LocalSetup.LoadFromFile(LocalPath + 'WebUpdate.json');
+    LocalSetup.LoadFromFile(LocalPath + FLocalFileName);
 
     FChannelName := LocalSetup.ChannelName;
   finally
@@ -210,7 +213,8 @@ begin
   LocalPath := ExtractFilePath(ParamStr(0));
   if FileExists(LocalPath + FUpdaterFileName) then
   begin
-    Parameters := '-u=' + BaseURL + ' -d=1000 -c=' + ChannelName;
+    Parameters := '-u=' + BaseURL + ' -d=1000 -c=' + ChannelName +
+      ' -l="' + ExtractRelativePath(LocalPath, FLocalFileName) + '"';
     ShellExecute(Application.Handle, 'open', PChar(LocalPath + FUpdaterFileName),
       PChar(Parameters), PChar(LocalPath), SW_SHOW);
     Application.Terminate;

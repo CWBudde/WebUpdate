@@ -179,9 +179,11 @@ object FormWebUpdateTool: TFormWebUpdateTool
       TreeOptions.MiscOptions = [toAcceptOLEDrop, toCheckSupport, toEditable, toFullRepaintOnResize, toInitOnSave, toToggleOnDblClick, toWheelPanning, toEditOnClick]
       TreeOptions.PaintOptions = [toShowButtons, toShowDropmark, toThemeAware, toUseBlendedImages]
       TreeOptions.SelectionOptions = [toExtendedFocus]
+      OnChange = TreeChannelsChange
       OnChecked = TreeChannelsChecked
       OnFreeNode = TreeChannelsFreeNode
       OnGetText = TreeChannelsGetText
+      OnNewText = TreeChannelsNewText
       Columns = <
         item
           Options = [coAllowClick, coDraggable, coEnabled, coParentBidiMode, coParentColor, coResizable, coShowDropMark, coVisible, coAutoSpring, coSmartResize, coAllowFocus, coEditable]
@@ -1106,7 +1108,7 @@ object FormWebUpdateTool: TFormWebUpdateTool
   object PopupMenu: TPopupMenu
     Left = 168
     Top = 264
-    object ScanDirectoriesandFiles1: TMenuItem
+    object MenuItemScanDirectoriesFiles: TMenuItem
       Action = ActionScanFiles
     end
     object N8: TMenuItem

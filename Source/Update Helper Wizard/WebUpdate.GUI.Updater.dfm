@@ -20,7 +20,7 @@ object FormWebUpdate: TFormWebUpdate
     Top = 47
     Width = 406
     Height = 177
-    ActivePage = TabSelectChannel
+    ActivePage = TabProgress
     Align = alClient
     Style = tsFlatButtons
     TabOrder = 0
@@ -162,6 +162,16 @@ object FormWebUpdate: TFormWebUpdate
         Alignment = taRightJustify
         Anchors = [akLeft, akTop, akRight]
         Caption = 'Time remaining: xx hour, xx min, xx sec'
+        Visible = False
+      end
+      object LabelSpeed: TLabel
+        Left = 313
+        Top = 113
+        Width = 82
+        Height = 15
+        Alignment = taRightJustify
+        Anchors = [akLeft, akTop, akRight]
+        Caption = 'Speed: 100 kb/s'
         Visible = False
       end
       object ProgressBarTotal: TProgressBar

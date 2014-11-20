@@ -33,6 +33,8 @@ type
     FModified: TDateTime;
     FChannelName: string;
     FAppName: TFileName;
+    FPreUpdateScript: string;
+    FPostUpdateScript: string;
   protected
     procedure Read(Root: TdwsJSONObject); override;
     procedure Write(Root: TdwsJSONObject); override;
@@ -43,6 +45,8 @@ type
     property Modified: TDateTime read FModified write FModified;
     property Items: TWebUpdateFileItems read FItems;
     property AppName: TFileName read FAppName write FAppName;
+    property PreUpdateScript: string read FPreUpdateScript write FPreUpdateScript;
+    property PostUpdateScript: string read FPostUpdateScript write FPostUpdateScript;
     property ChannelName: string read FChannelName write FChannelName;
   end;
 
@@ -98,6 +102,11 @@ begin
   if Assigned(Value) then
     FModified := ISO8601ToDateTime(Value.AsString);
 
+  // get pre-build script
+  Value := Root.Items['PreUpdateScript'];
+  if Assigned(Value) then
+    FPreUpdateScript := Value.AsString;
+
   // get files
   Value := Root.Items['Files'];
   if not (Value is TdwsJSONArray) then
@@ -138,9 +147,24 @@ begin
     if Assigned(Value) then
       Item.MD5Hash := Value.AsString;
 
+    // get action
+    Value := FileValue.Items['Action'];
+    if Assigned(Value) then
+      if SameText(Value.AsString, 'delete') then
+        Item.Action := iaDelete
+      else if SameText(Value.AsString, 'add') then
+        Item.Action := iaAdd
+      else
+        raise Exception.Create('Unknown action');
+
     // add item to file items
     FItems.Add(Item);
   end;
+
+  // get post-build script
+  Value := Root.Items['PostUpdateScript'];
+  if Assigned(Value) then
+    FPostUpdateScript := Value.AsString;
 
   // get application name
   Value := Root.Items['AppName'];
@@ -163,6 +187,10 @@ begin
   if FChannelName <> '' then
     Root.AddValue('Name').AsString := FChannelName;
 
+  // get pre-build script
+  if FPreUpdateScript <> '' then
+    Root.AddValue('PreUpdateScript').AsString := FPreUpdateScript;
+
   // create files array
   Files := Root.AddArray('Files');
 
@@ -170,10 +198,29 @@ begin
   begin
     FileValue := Files.AddObject;
     FileValue.AddValue('FileName').AsString := Item.FileName;
-    FileValue.AddValue('Size').AsInteger := Item.FileSize;
-    FileValue.AddValue('Modified').AsString := DateTimeToISO8601(Item.Modified);
-    FileValue.AddValue('MD5').AsString := Item.MD5Hash;
+
+    // eventually store file size
+    if Item.FileSize <> 0 then
+      FileValue.AddValue('Size').AsInteger := Item.FileSize;
+
+    // eventually store file modification time stamp
+    if Item.Modified <> 0 then
+      FileValue.AddValue('Modified').AsString := DateTimeToISO8601(Item.Modified);
+
+    // eventually store MD5 hash
+    if Item.MD5Hash <> '' then
+      FileValue.AddValue('MD5').AsString := Item.MD5Hash;
+
+    // eventually store action (default is 'add')
+    case Item.Action of
+      iaDelete:
+        FileValue.AddValue('Action').AsString := 'Delete';
+    end;
   end;
+
+  // get post-build script
+  if FPostUpdateScript <> '' then
+    Root.AddValue('PostUpdateScript').AsString := FPostUpdateScript;
 
   // write app name
   if FAppName <> '' then

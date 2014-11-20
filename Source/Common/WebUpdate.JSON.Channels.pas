@@ -59,44 +59,49 @@ end;
 procedure TWebUpdateChannels.Read(Root: TdwsJSONObject);
 var
   Value: TdwsJSONValue;
-  Files: TdwsJSONArray;
+  Channels: TdwsJSONArray;
   Index: Integer;
   Item: TWebUpdateChannelItem;
 begin
   inherited;
 
-  Value := Root.Items['Files'];
+  Value := Root.Items['Channels'];
+
+  // try the older 'Files' [deprecated!]
+  if not (Value is TdwsJSONArray) then
+    Value := Root.Items['Files'];
+
   if not (Value is TdwsJSONArray) then
     raise Exception.Create('Array expected!');
 
   // clear existing items
   FItems.Clear;
 
-  Files := TdwsJSONArray(Value);
-  for Index := 0 to Files.ElementCount - 1 do
+  Channels := TdwsJSONArray(Value);
+  for Index := 0 to Channels.ElementCount - 1 do
   begin
     Item := TWebUpdateChannelItem.Create;
 
     // get name
-    Value := Files.Elements[Index].Items['Name'];
+    Value := Channels.Elements[Index].Items['Name'];
     Item.Name := Value.AsString;
 
     // get filename
-    Value := Files.Elements[Index].Items['FileName'];
+    Value := Channels.Elements[Index].Items['FileName'];
     if Assigned(Value) then
       Item.FileName := Value.AsString
     else
-      Item.FileName := Item.Name + '.json';
+      Item.FileName := Item.Name + '/' + Item.Name + '.json';
 
     // get file modified
-    Value := Files.Elements[Index].Items['Modified'];
+    Value := Channels.Elements[Index].Items['Modified'];
     if Assigned(Value) then
       Item.Modified := ISO8601ToDateTime(Value.AsString)
     else
       Item.Modified := 0;
 
     // get MD5 hash
-    Value := Files.Elements[Index].Items['MD5'];
+    Value := Channels.Elements[Index].Items['MD5'];
     if Assigned(Value) then
       Item.MD5 := Value.AsString;
 
@@ -107,20 +112,20 @@ end;
 procedure TWebUpdateChannels.Write(Root: TdwsJSONObject);
 var
   Value: TdwsJSONObject;
-  Files: TdwsJSONArray;
+  Channels: TdwsJSONArray;
   Item: TWebUpdateChannelItem;
 begin
   inherited;
 
   Root.AddValue('Modified').AsString := DateTimeToISO8601(Now);
-  Files := Root.AddArray('Files');
+  Channels := Root.AddArray('Channels');
   for Item in FItems do
   begin
-    Value := TdwsJSONObject(Files.AddObject);
+    Value := TdwsJSONObject(Channels.AddObject);
     Value.AddValue('Name').AsString := Item.Name;
 
     // eventually store file name (if not identical to Name + '.json')
-    if not (Item.FileName = Item.Name + '.json') then
+    if not (Item.FileName = Item.Name + '/' + Item.Name + '.json') then
       if not (Item.FileName = '') then
         Value.AddValue('FileName').AsString := Item.FileName;
 

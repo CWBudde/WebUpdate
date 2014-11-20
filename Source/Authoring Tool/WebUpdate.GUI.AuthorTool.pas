@@ -100,7 +100,7 @@ type
     PanelFiles: TPanel;
     PopupMenu: TPopupMenu;
     ProgressBar: TProgressBar;
-    ScanDirectoriesandFiles1: TMenuItem;
+    MenuItemScanDirectoriesFiles: TMenuItem;
     Separator1: TToolButton;
     Separator2: TToolButton;
     Splitter: TSplitter;
@@ -154,6 +154,9 @@ type
     procedure ActionHelpAboutExecute(Sender: TObject);
     procedure ActionCommandLineExecute(Sender: TObject);
     procedure ActionDocumentationExecute(Sender: TObject);
+    procedure TreeChannelsNewText(Sender: TBaseVirtualTree; Node: PVirtualNode;
+      Column: TColumnIndex; NewText: string);
+    procedure TreeChannelsChange(Sender: TBaseVirtualTree; Node: PVirtualNode);
   private
     FProject: TWebUpdateProject;
     FPreferences: TWebUpdatePreferences;
@@ -161,6 +164,7 @@ type
     FAppName: string;
     FWebUpdate: TWebUpdate;
     FProjectModified: Boolean;
+    FCheckUpdateThread: TCheckUpdateThread;
 
     function ScanParameters: Boolean;
 
@@ -221,22 +225,32 @@ resourcestring
 constructor TCheckUpdateThread.Create(WebUpdate: TWebUpdate);
 begin
   FWebUpdate := WebUpdate;
-  FreeOnTerminate := True;
   inherited Create;
 end;
 
 procedure TCheckUpdateThread.Execute;
 begin
   FWebUpdate.GetChannelsInformationFromServer;
+
+  // check for termination
+  if Terminated then
+    Exit;
+
   if FWebUpdate.CheckForUpdate then
-    if MessageDlg('A new update is available!' + #13#10#13#10 +
-      'Update now?', mtInformation, [mbYes, mbNo], 0) = mrYes then
-      Synchronize(Update);
+  begin
+    // check for termination
+    if Terminated then
+      Exit;
+
+    Synchronize(Update);
+  end;
 end;
 
 procedure TCheckUpdateThread.Update;
 begin
-  FWebUpdate.PerformUpdate;
+  if MessageDlg('A new update is available!' + #13#10#13#10 +
+    'Update now?', mtInformation, [mbYes, mbNo], 0) = mrYes then
+    FWebUpdate.PerformUpdate;
 end;
 
 
@@ -273,6 +287,13 @@ end;
 
 procedure TFormWebUpdateTool.FormDestroy(Sender: TObject);
 begin
+  if Assigned(FCheckUpdateThread) then
+  begin
+    FCheckUpdateThread.Terminate;
+    FCheckUpdateThread.WaitFor;
+    FreeAndNil(FCheckUpdateThread);
+  end;
+
   FWebUpdate.Free;
   FChannels.Free;
   FProject.Free;
@@ -310,8 +331,9 @@ begin
   // create & setup self update
   FWebUpdate := TWebUpdate.Create;
   FWebUpdate.BaseURL := CBaseURL;
+  FWebUpdate.LocalChannelFileName := ChangeFileExt(ParamStr(0), '.json');
   FWebUpdate.GetLocalChannelInformation;
-  TCheckUpdateThread.Create(FWebUpdate);
+  FCheckUpdateThread := TCheckUpdateThread.Create(FWebUpdate);
 end;
 
 procedure TFormWebUpdateTool.FormClose(Sender: TObject;
@@ -894,8 +916,8 @@ begin
     Exit;
 
   // get filename for currently selected channel
-  FileName := Project.ChannelsPath + //NodeChannelData^.Name + '\' +
-    NodeChannelData^.FileName;
+  FileName := Project.ChannelsPath + ExtractFileName(
+    WebToLocalFileName(NodeChannelData^.FileName));
 
   // create selected channels
   ChannelSetup := TWebUpdateChannelSetup.Create;
@@ -960,6 +982,13 @@ begin
   ClearStatus;
 end;
 
+procedure TFormWebUpdateTool.TreeChannelsChange(Sender: TBaseVirtualTree;
+  Node: PVirtualNode);
+begin
+  if Assigned(Node) then
+    TreeChannels.CheckState[Node] := csCheckedNormal;
+end;
+
 procedure TFormWebUpdateTool.TreeChannelsChecked(Sender: TBaseVirtualTree;
   Node: PVirtualNode);
 var
@@ -977,7 +1006,9 @@ begin
   ChannelNodeData := TreeChannels.GetNodeData(Node);
   FProject.ChannelName := ChannelNodeData^.Name;
 
-  FileName := Project.ChannelsPath + ChannelNodeData^.FileName;
+  // get channel file name
+  FileName := ExtractFileName(WebToLocalFileName(ChannelNodeData^.FileName));
+  FileName := Project.ChannelsPath + FileName;
 
   // check if file exists
   if not FileExists(FileName) then
@@ -1051,6 +1082,20 @@ begin
     2:
       if NodeData^.Modified > 0 then
         CellText := DateTimeToStr(NodeData^.Modified);
+  end;
+end;
+
+procedure TFormWebUpdateTool.TreeChannelsNewText(Sender: TBaseVirtualTree;
+  Node: PVirtualNode; Column: TColumnIndex; NewText: string);
+var
+  NodeData: PChannelItem;
+begin
+  NodeData := TreeChannels.GetNodeData(Node);
+  case Column of
+    0:
+      NodeData^.Name := NewText;
+    1:
+      NodeData^.FileName := NewText;
   end;
 end;
 
@@ -1149,7 +1194,7 @@ var
   Path: string;
   ChannelSetup: TWebUpdateChannelSetup;
   FileItem: TWebUpdateFileItem;
-  ChannelName: string;
+  ChannelName, ChannelPath: string;
   RealFileName, ChannelFileName, DestFileName: TFileName;
   NodeData: PChannelItem;
 begin
@@ -1163,7 +1208,9 @@ begin
     Exit;
 
   ChannelName := NodeData^.Name;
-  ChannelFileName := Project.ChannelsPath + NodeData^.FileName;
+  ChannelFileName := Project.ChannelsPath +
+    ExtractFileName(WebToLocalFileName(NodeData^.FileName));
+  ChannelPath := ExtractFilePath(WebToLocalFileName(NodeData^.FileName));
 
   // upload files
   ChannelSetup := TWebUpdateChannelSetup.Create;
@@ -1183,7 +1230,7 @@ begin
       RealFileName := Project.BasePath + WebToLocalFileName(FileItem.FileName);
 
       // copy file
-      DestFileName := ExpandFileName(Path + ChannelName + '\' + FileItem.FileName);
+      DestFileName := ExpandFileName(Path + ChannelPath + FileItem.FileName);
       ForceDirectories(ExtractFileDir(DestFileName));
       CopyFile(PChar(RealFileName), PChar(DestFileName), False);
 
@@ -1196,7 +1243,7 @@ begin
 
   // copy channel setup
   WriteStatus('Copying channel setup...');
-  DestFileName := ExpandFileName(Path + ChannelName + '\' + NodeData^.FileName);
+  DestFileName := ExpandFileName(Path + ChannelPath + NodeData^.FileName);
   ForceDirectories(ExtractFileDir(DestFileName));
   CopyFile(PChar(ChannelFileName), PChar(DestFileName), False);
 
@@ -1229,7 +1276,8 @@ begin
     Exit;
 
   ChannelName := NodeData^.Name;
-  ChannelFileName := Project.ChannelsPath + NodeData^.FileName;
+  ChannelFileName := Project.ChannelsPath +
+    ExtractFileName(WebToLocalFileName(NodeData^.FileName));
   ChannelWebName := ChannelName + '/' + NodeData^.FileName;
 
   with TIdFTP.Create(nil) do
