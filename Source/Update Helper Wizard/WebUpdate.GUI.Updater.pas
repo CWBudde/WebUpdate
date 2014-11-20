@@ -69,7 +69,8 @@ type
       ByteCount: Integer; KBPS: Single; RemainingTime: TDateTime);
     procedure FileNameProgressEventHandler(Sender: TObject; const FileName: TFileName);
     procedure WebUpdateCompleteEventHandler(Sender: TObject);
-    procedure MD5MismatchHandler(Sender: TObject; const FileName: TFileName; var Ignore: Boolean);
+    procedure ErrorHandler(Sender: TObject; ErrorType: TWebUpdateErrorType;
+      const FileName: TFileName; var Ignore: Boolean);
   public
     procedure ScanCommandLineParameters;
     procedure PerformWebUpdate;
@@ -183,7 +184,7 @@ begin
   FWebUpdater.OnProgress := ProgressEventHandler;
   FWebUpdater.OnFileNameProgress := FileNameProgressEventHandler;
   FWebUpdater.OnDone := WebUpdateCompleteEventHandler;
-  FWebUpdater.OnMD5Mismatch := MD5MismatchHandler;
+  FWebUpdater.OnError := ErrorHandler;
 
   ScanCommandLineParameters;
 end;
@@ -272,16 +273,19 @@ begin
   PageControl.ActivePage := TabSummary;
 end;
 
-procedure TFormWebUpdate.MD5MismatchHandler(Sender: TObject;
-  const FileName: TFileName; var Ignore: Boolean);
+procedure TFormWebUpdate.ErrorHandler(Sender: TObject;
+  ErrorType: TWebUpdateErrorType; const FileName: TFileName; var Ignore: Boolean);
 begin
-  case MessageDlg(RStrMD5MismatchUpdate,
-    mtWarning, [mbAbort, mbIgnore], 0) of
-    mrAbort:
-      Ignore := False;
-    mrIgnore:
-      Ignore := True;
-  end;
+  if ErrorType = etChecksum then
+    case MessageDlg(RStrMD5MismatchUpdate,
+      mtWarning, [mbAbort, mbIgnore], 0) of
+      mrAbort:
+        Ignore := False;
+      mrIgnore:
+        Ignore := True;
+    end
+  else
+    Ignore := False;
 end;
 
 procedure TFormWebUpdate.RadioButtonChannelClick(Sender: TObject);
@@ -363,6 +367,7 @@ end;
 procedure TFormWebUpdate.TabProgressShow(Sender: TObject);
 begin
   ProgressBarTotal.Max := FWebUpdater.TotalBytes;
+  ProgressBarTotal.Position := 0;
 
   ButtonNext.Visible := False;
   ButtonClose.Caption := '&Abort';

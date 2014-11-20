@@ -40,12 +40,15 @@ type
     function LocateItemByFileName(const FileName: TFileName): TFileItem;
   end;
 
+  TWebUpdateErrorType = (etDownload, etChecksum);
+
   TUpdaterThread = class(TThread)
   type
     TProgressEvent = procedure (Sender: TObject; Progress: Integer;
       ByteCount: Integer; KBPS: Single; ProgressTime: TDateTime) of object;
     TFileNameProgressEvent = procedure (Sender: TObject; const FileName: TFileName) of object;
-    TMD5MismatchEvent = procedure (Sender: TObject; const FileName: TFileName; var Ignore: Boolean) of object;
+    TErrorEvent = procedure (Sender: TObject; ErrorType: TWebUpdateErrorType;
+      const FileName: TFileName; var Ignore: Boolean) of object;
     TScriptErrorsEvent = procedure (Sender: TObject; const MessageList: TdwsMessageList) of object;
   private
     FFiles: TFileItemList;
@@ -62,7 +65,7 @@ type
     FOnProgress: TProgressEvent;
     FOnDone: TNotifyEvent;
     FOnScriptErrors: TScriptErrorsEvent;
-    FOnMD5Mismatch: TMD5MismatchEvent;
+    FOnError: TErrorEvent;
     procedure HttpWork(ASender: TObject; AWorkMode: TWorkMode; AWorkCount: Int64);
   protected
     procedure RunScript(SourceCode: string);
@@ -80,7 +83,7 @@ type
     property OnProgress: TProgressEvent read FOnProgress write FOnProgress;
     property OnFileNameProgress: TFileNameProgressEvent read FOnFileNameProgress write FOnFileNameProgress;
     property OnDone: TNotifyEvent read FOnDone write FOnDone;
-    property OnMD5Mismatch: TMD5MismatchEvent read FOnMD5Mismatch write FOnMD5Mismatch;
+    property OnError: TErrorEvent read FOnError write FOnError;
     property OnScriptErrors: TScriptErrorsEvent read FOnScriptErrors write FOnScriptErrors;
   end;
 
@@ -89,6 +92,7 @@ type
     FBaseURL: string;
     FChannelName: string;
     FChannels: TWebUpdateChannels;
+    FChannelPath: string;
     FChannelsFileName: TFileName;
     FLocalChannelFileName: TFileName;
     FNewSetup: TWebUpdateChannelSetup;
@@ -101,7 +105,7 @@ type
     FOnFileNameProgress: TUpdaterThread.TFileNameProgressEvent;
     FOnScriptErrors: TUpdaterThread.TScriptErrorsEvent;
     FOnDone: TNotifyEvent;
-    FOnMD5Mismatch: TUpdaterThread.TMD5MismatchEvent;
+    FOnError: TUpdaterThread.TErrorEvent;
     FOnProgress: TUpdaterThread.TProgressEvent;
 
     function GetFileItemList: TFileItemList;
@@ -113,7 +117,8 @@ type
     procedure SetChannelsFileName(const Value: TFileName);
     procedure SetLocalChannelFileName(const Value: TFileName);
   protected
-    procedure MD5MismatchHandler(Sender: TObject; const FileName: TFileName; var Ignore: Boolean);
+    procedure ErrorHandler(Sender: TObject; ErrorType: TWebUpdateErrorType;
+      const FileName: TFileName; var Ignore: Boolean);
     procedure ProgressEventHandler(Sender: TObject; Progress: Integer;
       ByteCount: Integer; KBPS: Single; PassedTime: TDateTime);
     procedure FileChangedEventHandler(Sender: TObject; const FileName: TFileName);
@@ -145,7 +150,7 @@ type
     property OnFileNameProgress: TUpdaterThread.TFileNameProgressEvent read FOnFileNameProgress write FOnFileNameProgress;
     property OnDone: TNotifyEvent read FOnDone write FOnDone;
     property OnScriptErrors: TUpdaterThread.TScriptErrorsEvent read FOnScriptErrors write FOnScriptErrors;
-    property OnMD5Mismatch: TUpdaterThread.TMD5MismatchEvent read FOnMD5Mismatch write FOnMD5Mismatch;
+    property OnError: TUpdaterThread.TErrorEvent read FOnError write FOnError;
   end;
 
 implementation
@@ -267,7 +272,7 @@ var
   MS: TMemoryStream;
   Item: TFileItem;
   Hash: string;
-  IgnoreMD5Error: Boolean;
+  IgnoreError: Boolean;
 begin
   // eventually run pre script
   if FPreScript <> '' then
@@ -309,8 +314,16 @@ begin
         if Terminated then
           Exit;
 
-        // download file
-        FHttp.Get(FBasePath + Item.FileName, MS);
+        try
+          // download file
+          FHttp.Get(FBasePath + Item.FileName, MS);
+        except
+          IgnoreError := False;
+          if Assigned(FOnError) then
+            FOnError(Self, etDownload, FBasePath + Item.FileName, IgnoreError);
+          if not IgnoreError then
+            Exit;
+        end;
 
         // check if terminated
         if Terminated then
@@ -322,10 +335,10 @@ begin
           Hash := MD5(MS);
           if Hash <> Item.MD5Hash then
           begin
-            IgnoreMD5Error := False;
-            if Assigned(FOnMD5Mismatch) then
-              FOnMD5Mismatch(Self, Item.FileName, IgnoreMD5Error);
-            if not IgnoreMD5Error then
+            IgnoreError := False;
+            if Assigned(FOnError) then
+              FOnError(Self, etChecksum, Item.FileName, IgnoreError);
+            if not IgnoreError then
               Exit;
           end;
         end;
@@ -384,6 +397,7 @@ begin
   // specify default values
   FBaseURL := '';
   FCurrentSize := 0;
+  FChannelPath := '';
   FDownloadSpeedAverage := 0;
   FChannelsFileName := 'Channels.json';
   FLocalChannelFileName := 'WebUpdate.json';
@@ -418,6 +432,7 @@ var
   ChannelItem: TWebUpdateChannelItem;
   Item: TWebUpdateFileItem;
   FileItem: TFileItem;
+  PathDelimPos: Integer;
   LocalSetup: TWebUpdateChannelSetup;
 begin
   LoadChannels;
@@ -425,6 +440,8 @@ begin
   for ChannelItem in FChannels.Items do
     if UnicodeSameText(ChannelItem.Name, ChannelName) then
     begin
+      PathDelimPos := LastDelimiter('/', ChannelItem.FileName);
+      FChannelPath := Copy(ChannelItem.FileName, 1, PathDelimPos);
       LoadSetupFromFile(ChannelItem.FileName);
       Break;
     end;
@@ -638,10 +655,9 @@ begin
   FThread.OnFileNameProgress := FileChangedEventHandler;
   FThread.OnDone := DoneEventHandler;
   FThread.OnScriptErrors := ScriptErrorsEventHandler;
-  FThread.OnMD5Mismatch := MD5MismatchHandler;
+  FThread.OnError := ErrorHandler;
 
-  // specify paths
-  FThread.BasePath := FBaseURL;
+  FThread.BasePath := FBaseURL + FChannelPath;
   FThread.LocalPath := ExtractFilePath(FLocalChannelFileName);
 
   // specify scripts
@@ -690,12 +706,12 @@ begin
   FNewSetup.LoadFromString(Text);
 end;
 
-procedure TWebUpdater.MD5MismatchHandler(Sender: TObject;
-  const FileName: TFileName; var Ignore: Boolean);
+procedure TWebUpdater.ErrorHandler(Sender: TObject;
+  ErrorType: TWebUpdateErrorType; const FileName: TFileName; var Ignore: Boolean);
 begin
   // event redirection
-  if Assigned(FOnMD5Mismatch) then
-    FOnMD5Mismatch(Sender, FileName, Ignore);
+  if Assigned(FOnError) then
+    FOnError(Sender, ErrorType, FileName, Ignore);
 end;
 
 procedure TWebUpdater.ProgressEventHandler(Sender: TObject; Progress,

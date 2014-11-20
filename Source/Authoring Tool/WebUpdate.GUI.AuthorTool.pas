@@ -213,7 +213,7 @@ uses
   WebUpdate.JSON.Serializer, WebUpdate.Tools;
 
 const
-  CBaseURL = 'https://raw.githubusercontent.com/CWBudde/WebUpdate/master/Binaries/WebUpdate/';
+  CBaseURL = 'https://raw.githubusercontent.com/CWBudde/WebUpdate/master/Binaries/Snapshots/';
 
 resourcestring
   RStrFileNotFound = 'File %s not found';
@@ -230,6 +230,7 @@ end;
 
 procedure TCheckUpdateThread.Execute;
 begin
+  // first get some information
   FWebUpdate.GetChannelsInformationFromServer;
 
   // check for termination

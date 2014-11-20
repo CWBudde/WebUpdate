@@ -166,19 +166,19 @@ end;
 
 procedure TWebUpdate.GetLocalChannelInformation;
 var
-  LocalPath: TFileName;
+  FullLocalFileName: TFileName;
   LocalSetup: TWebUpdateChannelSetup;
 begin
-  // check if a local file is present otherwise exit
-  LocalPath := ExtractFilePath(ParamStr(0));
-  if not FileExists(LocalPath + FLocalFileName) then
-    Exit;
+  FullLocalFileName := FLocalFileName;
+  if IsRelativePath(FullLocalFileName) then
+    FullLocalFileName := ExtractFilePath(ParamStr(0)) + FullLocalFileName;
 
   LocalSetup := TWebUpdateChannelSetup.Create;
   try
-    LocalSetup.LoadFromFile(LocalPath + FLocalFileName);
+    LocalSetup.LoadFromFile(FullLocalFileName);
 
     FChannelName := LocalSetup.ChannelName;
+    FLastModified := LocalSetup.Modified;
   finally
     LocalSetup.Free;
   end;
@@ -213,8 +213,8 @@ begin
   LocalPath := ExtractFilePath(ParamStr(0));
   if FileExists(LocalPath + FUpdaterFileName) then
   begin
-    Parameters := '-u=' + BaseURL + ' -d=1000 -c=' + ChannelName +
-      ' -l="' + ExtractRelativePath(LocalPath, FLocalFileName) + '"';
+    Parameters := Format('-u="%s" -d=%d -c="%s" -l="%s"', [BaseURL, 1000,
+      ChannelName, ExtractRelativePath(LocalPath, FLocalFileName)]);
     ShellExecute(Application.Handle, 'open', PChar(LocalPath + FUpdaterFileName),
       PChar(Parameters), PChar(LocalPath), SW_SHOW);
     Application.Terminate;
