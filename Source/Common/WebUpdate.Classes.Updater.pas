@@ -4,8 +4,8 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Generics.Collections,
-  IdHTTP, IdComponent,
-  dwsComp, dwsExprs, dwsErrors, WebUpdate.JSON.Channels, WebUpdate.JSON.Channel;
+  IdHTTP, IdComponent, dwsComp, dwsExprs, dwsErrors, dwsClassesLibModule,
+  WebUpdate.JSON.Channels, WebUpdate.JSON.Channel;
 
 type
   EHttpDownload = class(Exception);
@@ -55,8 +55,6 @@ type
     FHttp: TIdHttp;
     FLocalPath: string;
     FBasePath: string;
-    FPostScript: string;
-    FPreScript: string;
     FStartTimeStamp: TDateTime;
     FLastTimeStamp: TDateTime;
     FLastWorkCount: Integer;
@@ -68,7 +66,6 @@ type
     FOnError: TErrorEvent;
     procedure HttpWork(ASender: TObject; AWorkMode: TWorkMode; AWorkCount: Int64);
   protected
-    procedure RunScript(SourceCode: string);
     procedure Execute; override;
   public
     constructor Create(const Files: TFileItemList); reintroduce;
@@ -76,9 +73,6 @@ type
     property Files: TFileItemList read FFiles;
     property BasePath: string read FBasePath write FBasePath;
     property LocalPath: string read FLocalPath write FLocalPath;
-
-    property PreScript: string read FPreScript write FPreScript;
-    property PostScript: string read FPostScript write FPostScript;
 
     property OnProgress: TProgressEvent read FOnProgress write FOnProgress;
     property OnFileNameProgress: TFileNameProgressEvent read FOnFileNameProgress write FOnFileNameProgress;
@@ -101,6 +95,8 @@ type
     FTotalSize: Int64;
     FCurrentSize: Int64;
     FDownloadSpeedAverage: Single;
+    FScriptCompiler: TDelphiWebScript;
+    FClassesLib: TdwsClassesLib;
 
     FOnFileNameProgress: TUpdaterThread.TFileNameProgressEvent;
     FOnScriptErrors: TUpdaterThread.TScriptErrorsEvent;
@@ -124,6 +120,8 @@ type
     procedure FileChangedEventHandler(Sender: TObject; const FileName: TFileName);
     procedure ScriptErrorsEventHandler(Sender: TObject; const MessageList: TdwsMessageList);
     procedure DoneEventHandler(Sender: TObject);
+
+    procedure RunScript(SourceCode: string);
 
     procedure BuildFileListCache;
     procedure ResetFileListCache;
@@ -206,8 +204,6 @@ constructor TUpdaterThread.Create(const Files: TFileItemList);
 begin
   FFiles := Files;
 
-  FPreScript := '';
-  FPostScript := '';
   FLastWorkCount := 0;
 
   inherited Create(False);
@@ -245,28 +241,6 @@ begin
   end;
 end;
 
-procedure TUpdaterThread.RunScript(SourceCode: string);
-var
-  CompiledProgram: IdwsProgram;
-begin
-  with TDelphiWebScript.Create(nil) do
-  try
-    CompiledProgram := Compile(SourceCode);
-    if CompiledProgram.Msgs.HasErrors then
-    begin
-      if Assigned(OnScriptErrors) then
-        OnScriptErrors(Self, CompiledProgram.Msgs);
-
-      Exit;
-    end;
-
-    // now execute script
-    CompiledProgram.Execute;
-  finally
-    Free;
-  end;
-end;
-
 procedure TUpdaterThread.Execute;
 var
   MS: TMemoryStream;
@@ -274,10 +248,6 @@ var
   Hash: string;
   IgnoreError: Boolean;
 begin
-  // eventually run pre script
-  if FPreScript <> '' then
-    RunScript(FPreScript);
-
   FStartTimeStamp := Now;
   FHttp := TIdHTTP.Create(nil);
   try
@@ -366,10 +336,6 @@ begin
   if Terminated then
     Exit;
 
-  // eventually run post script
-  if FPostScript <> '' then
-    RunScript(FPostScript);
-
   // check if terminated
   if Terminated then
     Exit;
@@ -394,11 +360,16 @@ begin
   FChannels := TWebUpdateChannels.Create;
   FNewSetup := TWebUpdateChannelSetup.Create;
 
+  FScriptCompiler := TDelphiWebScript.Create(nil);
+  FClassesLib := TdwsClassesLib.Create(nil);
+  FClassesLib.Script := FScriptCompiler;
+
   // specify default values
   FBaseURL := '';
   FCurrentSize := 0;
   FChannelPath := '';
   FDownloadSpeedAverage := 0;
+
   FChannelsFileName := 'Channels.json';
   FLocalChannelFileName := 'WebUpdate.json';
 end;
@@ -411,6 +382,8 @@ begin
 
   // free objects
   FFileItemListCache.Free;
+  FClassesLib.Free;
+  FScriptCompiler.Free;
   FChannels.Free;
   FNewSetup.Free;
   if Assigned(FThread) then
@@ -521,12 +494,20 @@ begin
     if Item.Action <> iaDelete then
       FTotalSize := FTotalSize + Item.FileSize;
   end;
+
+  // eventually run pre script
+  if FNewSetup.PreUpdateScript <> '' then
+    RunScript(FNewSetup.PreUpdateScript);
 end;
 
 procedure TWebUpdater.DoneEventHandler(Sender: TObject);
 begin
   // save new setup
   FNewSetup.SaveToFile(FLocalChannelFileName);
+
+  // eventually run post script
+  if FNewSetup.PostUpdateScript <> '' then
+    RunScript(FNewSetup.PostUpdateScript);
 
   FThread := nil;
 
@@ -660,14 +641,27 @@ begin
   FThread.BasePath := FBaseURL + FChannelPath;
   FThread.LocalPath := ExtractFilePath(FLocalChannelFileName);
 
-  // specify scripts
-  if Assigned(FNewSetup) then
+  FThread.Suspended := False;
+end;
+
+procedure TWebUpdater.RunScript(SourceCode: string);
+var
+  CompiledProgram: IdwsProgram;
+begin
+  // compile script
+  CompiledProgram := FScriptCompiler.Compile(SourceCode);
+
+  // check for errors
+  if CompiledProgram.Msgs.HasErrors then
   begin
-    FThread.PreScript := FNewSetup.PreUpdateScript;
-    FThread.PostScript := FNewSetup.PostUpdateScript;
+    if Assigned(OnScriptErrors) then
+      OnScriptErrors(Self, CompiledProgram.Msgs);
+
+    Exit;
   end;
 
-  FThread.Suspended := False;
+  // execute script
+  CompiledProgram.Execute;
 end;
 
 procedure TWebUpdater.LoadSetupFromFile(const FileName: TFileName);
