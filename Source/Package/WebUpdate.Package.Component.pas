@@ -21,8 +21,8 @@ type
     destructor Destroy; override;
 
     function CheckForUpdate: Boolean;
-    procedure GetCurrentChannelInformation;
-    procedure GetChannelsInformation;
+    procedure GetLocalChannelInformation;
+    procedure GetChannelsInformationFromServer;
     procedure PerformUpdate;
     procedure PerformDownloadUpdater;
 
@@ -68,14 +68,14 @@ begin
   Result := FWebUpdate.ChannelName;
 end;
 
-procedure TWebUpdateComponent.GetChannelsInformation;
+procedure TWebUpdateComponent.GetChannelsInformationFromServer;
 begin
-  FWebUpdate.GetChannelsInformation;
+  FWebUpdate.GetChannelsInformationFromServer;
 end;
 
-procedure TWebUpdateComponent.GetCurrentChannelInformation;
+procedure TWebUpdateComponent.GetLocalChannelInformation;
 begin
-  FWebUpdate.GetCurrentChannelInformation;
+  FWebUpdate.GetLocalChannelInformation
 end;
 
 function TWebUpdateComponent.GetDownloadUpdater: Boolean;
@@ -85,7 +85,7 @@ end;
 
 procedure TWebUpdateComponent.PerformDownloadUpdater;
 begin
-  if FWebUpdate.BaseURL = then
+  if FWebUpdate.BaseURL = '' then
     raise Exception.Create(RStrURLNotSpecified);
 
   FWebUpdate.PerformDownloadUpdater;
@@ -93,7 +93,7 @@ end;
 
 procedure TWebUpdateComponent.PerformUpdate;
 begin
-  if FWebUpdate.BaseURL = then
+  if FWebUpdate.BaseURL = '' then
     raise Exception.Create(RStrURLNotSpecified);
 
   FWebUpdate.PerformUpdate;

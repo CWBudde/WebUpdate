@@ -37,7 +37,7 @@ requires
   dwsLibRuntime;
 
 contains
-  WebUpdate.MD5 in '..\Source\Common\WebUpdate.MD5.pas',
+  WebUpdate.Tools in '..\Source\Common\WebUpdate.Tools.pas',
   WebUpdate.Classes.Updater in '..\Source\Common\WebUpdate.Classes.Updater.pas',
   WebUpdate.Classes.WebUpdate in '..\Source\Common\WebUpdate.Classes.WebUpdate.pas',
   WebUpdate.JSON.Channels in '..\Source\Common\WebUpdate.JSON.Channels.pas',
