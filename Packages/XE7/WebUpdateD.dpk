@@ -1,12 +1,12 @@
 package WebUpdateD;
 
 {$R *.res}
-{$R 'WebUpdateD.dcr'}
+{$R '..\WebUpdateD.dcr'}
 {$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
 {$ALIGN 8}
 {$ASSERTIONS ON}
 {$BOOLEVAL OFF}
-{$DEBUGINFO ON}
+{$DEBUGINFO OFF}
 {$EXTENDEDSYNTAX ON}
 {$IMPORTEDDATA ON}
 {$IOCHECKS ON}
@@ -27,7 +27,7 @@ package WebUpdateD;
 {$DEFINE DEBUG}
 {$ENDIF IMPLICITBUILDING}
 {$DESCRIPTION 'WebUpdate Non-Visual'}
-{$LIBSUFFIX '16'}
+{$LIBSUFFIX '210'}
 {$DESIGNONLY}
 {$IMPLICITBUILD OFF}
 
@@ -36,7 +36,7 @@ requires
   WebUpdateR;
 
 contains
-  WebUpdate.Package.Reg in '..\Source\Package\WebUpdate.Package.Reg.pas';
+  WebUpdate.Package.Reg in '..\..\Source\Package\WebUpdate.Package.Reg.pas';
 
 end.
 
