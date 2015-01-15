@@ -1,0 +1,49 @@
+package WebUpdateR;
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO ON}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
+{$LIBSUFFIX '190'}
+{$RUNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  vcl,
+  IndyCore,
+  IndySystem,
+  IndyProtocols,
+  dwsLibRuntime;
+
+contains
+  WebUpdate.Tools in '..\..\Source\Common\WebUpdate.Tools.pas',
+  WebUpdate.Classes.Updater in '..\..\Source\Common\WebUpdate.Classes.Updater.pas',
+  WebUpdate.Classes.WebUpdate in '..\..\Source\Common\WebUpdate.Classes.WebUpdate.pas',
+  WebUpdate.JSON.Channels in '..\..\Source\Common\WebUpdate.JSON.Channels.pas',
+  WebUpdate.JSON.Channel in '..\..\Source\Common\WebUpdate.JSON.Channel.pas',
+  WebUpdate.JSON.Serializer in '..\..\Source\Common\WebUpdate.JSON.Serializer.pas',
+  WebUpdate.Package.Component in '..\..\Source\Package\WebUpdate.Package.Component.pas';
+
+end.
+
