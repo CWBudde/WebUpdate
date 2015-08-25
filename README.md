@@ -15,6 +15,8 @@ Beyond the license, there are at least 4 dependencies to other libraries namely:
 
 Please make sure you have these libraries accessible from your Delphi environment. So far all modern Delphi XE versions are supported. Older versions might work as well, but probably need some refactoring in order to run out of the box.
 
+Beyond this a basic Delphinus-Support has been added, which should make installation easier in the future.
+
 Command-line switches (Authoring tool)
 --------------------------------------
 
@@ -69,3 +71,5 @@ While the 'Updater' tool can be started as stand-alone tool, it is supposed to w
     --------
     
       Updater.exe -c=Nightly
+
+

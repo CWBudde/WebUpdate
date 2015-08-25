@@ -1,0 +1,33 @@
+{
+        "search_pathes": 
+    [
+        {
+            "pathes": "Common;Package",
+            "platforms": "Win32;Win64;OSX32"
+        }
+    ],
+    "browsing_pathes": 
+    [
+        {
+            "pathes": "Common;Package",
+            "platforms": "Win32;Win64;OSX32"
+        }
+    ],
+
+    "source_folders":
+    [
+        {
+            "folder": "Source",
+            "base": "Source",
+            "recursive": true,
+            "filter": "*;*.*"
+        }
+    ],
+
+    "projects":
+    [
+        {
+            "project": "Source\\Authoring Tool\\AuthoringTool.dproj"
+        }
+    ]
+}
