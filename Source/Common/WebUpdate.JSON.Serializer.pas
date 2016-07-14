@@ -118,7 +118,11 @@ begin
   if not (Root is TdwsJSONObject) then
     raise EJsonSerializer.Create('Object expected');
 
-  Read(TdwsJSONObject(Root));
+  try
+    Read(TdwsJSONObject(Root));
+  finally
+    Root.Free;
+  end;
 end;
 
 procedure TJsonSerializer.SaveToFile(const FileName: TFileName);
@@ -140,7 +144,11 @@ begin
   if not (Root is TdwsJSONObject) then
     raise EJsonSerializer.Create('Object expected');
 
-  Read(TdwsJSONObject(Root));
+  try
+    Read(TdwsJSONObject(Root));
+  finally
+    Root.Free;
+  end;
 end;
 
 function TJsonSerializer.SaveToString: string;
