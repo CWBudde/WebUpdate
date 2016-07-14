@@ -13,7 +13,7 @@ type
     Modified: TDateTime;
     MD5: string;
   end;
-  TWebUpdateChannelItems = TList<TWebUpdateChannelItem>;
+  TWebUpdateChannelItems = TObjectList<TWebUpdateChannelItem>;
 
   TWebUpdateChannels = class(TJsonSerializer)
   private
@@ -23,6 +23,7 @@ type
     procedure Write(Root: TdwsJSONObject); override;
   public
     constructor Create;
+    destructor Destroy; override;
     class function GetID: string; override;
 
     function GetItemForChannel(ChannelName: string): TWebUpdateChannelItem;
@@ -38,6 +39,12 @@ constructor TWebUpdateChannels.Create;
 begin
   inherited;
   FItems := TWebUpdateChannelItems.Create;
+end;
+
+destructor TWebUpdateChannels.Destroy;
+begin
+  FItems.Free;
+  inherited;
 end;
 
 class function TWebUpdateChannels.GetID: string;

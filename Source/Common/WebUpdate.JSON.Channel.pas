@@ -25,7 +25,7 @@ type
     property Modified: TDateTime read FModified write FModified;
     property MD5Hash: string read FMD5Hash write FMD5Hash;
   end;
-  TWebUpdateFileItems = TList<TWebUpdateFileItem>;
+  TWebUpdateFileItems = TObjectList<TWebUpdateFileItem>;
 
   TWebUpdateChannelSetup = class(TJsonSerializer)
   private
@@ -40,6 +40,7 @@ type
     procedure Write(Root: TdwsJSONObject); override;
   public
     constructor Create;
+    destructor Destroy; override;
     class function GetID: string; override;
 
     property Modified: TDateTime read FModified write FModified;
@@ -75,6 +76,12 @@ begin
   FItems := TWebUpdateFileItems.Create;
   FAppName := '';
   FModified := 0;
+end;
+
+destructor TWebUpdateChannelSetup.Destroy;
+begin
+  FItems.Free;
+  inherited;
 end;
 
 class function TWebUpdateChannelSetup.GetID: string;
